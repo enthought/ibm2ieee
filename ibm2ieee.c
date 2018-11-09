@@ -4,44 +4,72 @@
 #include "numpy/ufuncobject.h"
 #include "numpy/npy_3kcompat.h"
 
-/*
- * single_type_logit.c
- * This is the C code for creating your own
- * NumPy ufunc for a logit function.
- *
- * In this code we only define the ufunc for
- * a single dtype. The computations that must
- * be replaced to create a ufunc for
- * a different function are marked with BEGIN
- * and END.
- *
- * Details explaining the Python-C API can be found under
- * 'Extending and Embedding' and 'Python/C API' at
- * docs.python.org .
- */
 
-static PyMethodDef LogitMethods[] = {
+static PyMethodDef IBM2IEEEMethods[] = {
   {NULL, NULL, 0, NULL}
 };
 
-/* The loop definition must precede the PyMODINIT_FUNC. */
 
-static void double_logit(char **args, npy_intp *dimensions,
-                         npy_intp* steps, void* data)
+static void ibm2ieee32(char **args, npy_intp *dimensions,
+                       npy_intp* steps, void* data)
 {
   npy_intp i;
   npy_intp n = dimensions[0];
   char *in = args[0], *out = args[1];
   npy_intp in_step = steps[0], out_step = steps[1];
 
-  double tmp;
+  npy_uint32 tmp, significand, exponent, sign, result;
 
   for (i = 0; i < n; i++) {
-    /*BEGIN main ufunc computation*/
-    tmp = *(double *)in;
-    tmp /= 1-tmp;
-    *((double *)out) = log(tmp);
-    /*END main ufunc computation*/
+    tmp = *(npy_uint32 *)in;
+
+    significand = tmp & (npy_uint32)0x00FFFFFFU;
+    exponent = ((tmp & (npy_uint32)0x7F000000U) >> 22) - 130;
+    sign = tmp & (npy_uint32)0x80000000U;
+
+    if (significand) {
+      /* normalise */
+      while (significand < (npy_uint32)0x00800000U) {
+        significand <<= 1;
+        exponent -= 1U;
+      }
+
+      if ((npy_int32)exponent <= 0) {
+        if ((npy_int32)exponent < -23) {
+          /* underflow to zero */
+          significand = 0;
+          exponent = 0;
+        }
+        else {
+          /* underflow; apply round-ties-to-even */
+          npy_uint32 shift, mask, has_remainder, is_odd;
+          shift = -exponent;
+          mask = ~((~0U) << shift);
+          has_remainder = !!(significand & mask);
+          significand >>= shift;
+          is_odd = !!(significand & 2);
+          significand += (is_odd | has_remainder);
+          significand >>= 1;
+          /* not possible for significand to be more than 2**23 at this point,
+             due to limitations of IBM single precision */
+          exponent = 0U;
+        }
+      }
+      else if (exponent >= 255U) {
+        /* overflow to infinity */
+        significand = 0U;
+        exponent = 255U;
+      }
+      else {
+        significand -= 0x00800000U;
+      }
+    }
+    else {
+      /* zero */
+      exponent = 0;
+    }
+    result = sign | (exponent << 23) | significand;
+    *((npy_uint32 *)out) = result;
 
     in += in_step;
     out += out_step;
@@ -49,10 +77,9 @@ static void double_logit(char **args, npy_intp *dimensions,
 }
 
 /*This a pointer to the above function*/
-PyUFuncGenericFunction funcs[1] = {&double_logit};
+PyUFuncGenericFunction funcs[1] = {&ibm2ieee32};
 
-/* These are the input and return dtypes of logit.*/
-static char types[2] = {NPY_DOUBLE, NPY_DOUBLE};
+static char types[2] = {NPY_UINT32, NPY_FLOAT32};
 
 static void *data[1] = {NULL};
 
@@ -62,7 +89,7 @@ static struct PyModuleDef moduledef = {
   "ibm2ieee",
   NULL,
   -1,
-  LogitMethods,
+  IBM2IEEEMethods,
   NULL,
   NULL,
   NULL,
@@ -71,7 +98,7 @@ static struct PyModuleDef moduledef = {
 
 PyMODINIT_FUNC PyInit_ibm2ieee(void)
 {
-  PyObject *m, *logit, *d;
+  PyObject *m, *ibm2float32, *d;
   m = PyModule_Create(&moduledef);
   if (!m) {
     return NULL;
@@ -80,24 +107,24 @@ PyMODINIT_FUNC PyInit_ibm2ieee(void)
   import_array();
   import_umath();
 
-  logit = PyUFunc_FromFuncAndData(funcs, data, types, 1, 1, 1,
-                                  PyUFunc_None, "logit",
-                                  "logit_docstring", 0);
+  ibm2float32 = PyUFunc_FromFuncAndData(funcs, data, types, 1, 1, 1,
+                                        PyUFunc_None, "ibm2float32",
+                                        "docstring", 0);
 
   d = PyModule_GetDict(m);
 
-  PyDict_SetItemString(d, "logit", logit);
-  Py_DECREF(logit);
+  PyDict_SetItemString(d, "ibm2float32", ibm2float32);
+  Py_DECREF(ibm2float32);
 
   return m;
 }
 #else
 PyMODINIT_FUNC initibm2ieee(void)
 {
-  PyObject *m, *logit, *d;
+  PyObject *m, *ibm2ieee32, *d;
 
 
-  m = Py_InitModule("ibm2ieee", LogitMethods);
+  m = Py_InitModule("ibm2ieee", IBM2IEEEMethods);
   if (m == NULL) {
     return;
   }
@@ -105,13 +132,13 @@ PyMODINIT_FUNC initibm2ieee(void)
   import_array();
   import_umath();
 
-  logit = PyUFunc_FromFuncAndData(funcs, data, types, 1, 1, 1,
-                                  PyUFunc_None, "logit",
-                                  "logit_docstring", 0);
+  ibm2ieee32 = PyUFunc_FromFuncAndData(funcs, data, types, 1, 1, 1,
+                                  PyUFunc_None, "ibm2ieee32",
+                                  "ibm2ieee32_docstring", 0);
 
   d = PyModule_GetDict(m);
 
-  PyDict_SetItemString(d, "logit", logit);
-  Py_DECREF(logit);
+  PyDict_SetItemString(d, "ibm2ieee32", ibm2ieee32);
+  Py_DECREF(ibm2ieee32);
 }
 #endif
