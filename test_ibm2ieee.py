@@ -73,8 +73,12 @@ single_to_single_pairs = [
     (0x41800000, 8.0),
     (0x60ffffff, float.fromhex("0x0.ffffffp+128")),
     (0x61100000, float("inf")),
-]
+    (0x61200000, float("inf")),
+    (0x61400000, float("inf")),
+    (0x62100000, float("inf")),
 
+
+]
 
 double_to_single_pairs = [
     (0x1effffffffffffff, float.fromhex("0x1p-136")),

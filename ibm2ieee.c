@@ -14,6 +14,21 @@ static int bitlength32(npy_uint32 n)
   return n_bits;
 }
 
+static npy_uint32 rshift_ties_to_even(npy_uint32 n, int shift) {
+  npy_uint32 mask, has_remainder, is_odd;
+
+  if (shift > 32) {
+    return 0U;
+  }
+  mask = ~((~0U) << (shift - 1));
+  has_remainder = !!(n & mask);
+  n >>= shift - 1;
+  is_odd = !!(n & 2);
+  n += (is_odd | has_remainder);
+  return n >> 1;
+}
+
+
 
 static PyMethodDef IBM2IEEEMethods[] = {
   {NULL, NULL, 0, NULL}
@@ -28,58 +43,31 @@ static void ibm32ieee32(char **args, npy_intp *dimensions,
   char *in = args[0], *out = args[1];
   npy_intp in_step = steps[0], out_step = steps[1];
 
-  npy_uint32 tmp, significand, sign, result;
-  int exponent;
-
   for (i = 0; i < n; i++) {
-    tmp = *(npy_uint32 *)in;
-
-    significand = tmp & (npy_uint32)0x00FFFFFFU;
-    exponent = ((tmp & (npy_uint32)0x7F000000U) >> 22) - 130;
-    sign = tmp & (npy_uint32)0x80000000U;
+    int target_exponent;
+    npy_uint32 tmp = *(npy_uint32 *)in;
+    npy_uint32 significand = tmp & (npy_uint32)0x00FFFFFFU;
+    npy_uint32 sign = tmp & (npy_uint32)0x80000000U;
 
     if (significand) {
-      /* normalise */
-      int shift = 24 - bitlength32(significand);
-      significand <<= shift;
-      exponent -= shift;
-
-      if (exponent <= 0) {
-        if (exponent < -23) {
-          /* underflow to zero */
-          significand = 0;
-          exponent = 0;
-        }
-        else {
-          /* underflow; apply round-ties-to-even */
-          npy_uint32 shift, mask, has_remainder, is_odd;
-          shift = -exponent;
-          mask = ~((~0U) << shift);
-          has_remainder = !!(significand & mask);
-          significand >>= shift;
-          is_odd = !!(significand & 2);
-          significand += (is_odd | has_remainder);
-          significand >>= 1;
-          /* not possible for significand to be more than 2**23 at this point,
-             due to limitations of IBM single precision */
-          exponent = 0;
-        }
-      }
-      else if (exponent >= 255) {
-        /* overflow to infinity */
-        significand = 0U;
-        exponent = 255;
+      int exponent = ((tmp & (npy_uint32)0x7F000000U) >> 22) - 155;
+      target_exponent = exponent + bitlength32(significand);
+      if (target_exponent >= 254) {
+        target_exponent = 254;
+        significand = 0x800000U;
       }
       else {
-        significand -= 0x00800000U;
+        int shift;
+        target_exponent = target_exponent >= 0 ? target_exponent : 0;
+        shift = exponent + 24 - target_exponent;
+        significand = shift >= 0 ? significand << shift :
+          rshift_ties_to_even(significand, -shift);
       }
     }
     else {
-      /* zero */
-      exponent = 0;
+      target_exponent = 0;
     }
-    result = sign | ((npy_uint32)exponent << 23) | significand;
-    *((npy_uint32 *)out) = result;
+    *((npy_uint32 *)out) = sign + ((npy_uint32)target_exponent << 23) + significand;
 
     in += in_step;
     out += out_step;
