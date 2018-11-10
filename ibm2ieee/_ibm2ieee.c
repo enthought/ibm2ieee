@@ -305,8 +305,8 @@ Examples\n\
 --------\n\
 >>> ibm2float32(np.uint32(0xc1180000))\n\
 -1.5\n\
->>> ibm2float32(np.uint64(0x413243f6a8885a31))
-3.1415927
+>>> ibm2float32(np.uint64(0x413243f6a8885a31))\n\
+3.1415927\n\
 >>> ibm2float32(np.uint32(0x61100000))\n\
 inf\n\
 ");
