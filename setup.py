@@ -31,8 +31,6 @@ SHORT_DESCRIPTION = """\
 Conversions from IBM hexadecimal floating-point to IEEE 754 floating-point.
 """
 
-# XXX Add README
-
 if __name__ == "__main__":
     setup(
         name="ibm2ieee",
