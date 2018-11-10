@@ -8,6 +8,7 @@ from npufunc_directory.ibm2ieee import ibm2float32, ibm2float64
 # Two as a fraction, so that TWO**n is an exact operation for any n.
 TWO = F(2)
 
+
 # Simple and inefficient Python conversions, for testing purposes.
 
 def ilog2_fraction(f):
@@ -59,6 +60,7 @@ IEEE32_FRAC = 23
 IEEE32_POSINF = 0x7f800000
 IEEE32_SIGN = 0x80000000
 
+
 def ieee32_from_fraction(s, f):
     """
     Convert sign and fraction to a bit-representation of an IEEE single.
@@ -77,6 +79,7 @@ IEEE64_FRAC = 52
 IEEE64_POSINF = 0x7ff0000000000000
 IEEE64_SIGN = 0x8000000000000000
 
+
 def ieee64_from_fraction(s, f):
     """
     Convert sign and fraction to a bit-representation of an IEEE double.
@@ -94,19 +97,20 @@ def ibm32ieee32(ibm):
     ieee = ieee32_from_fraction(*fraction_from_ibm32(int(ibm)))
     return np.uint32(ieee).view(np.float32)
 
+
 def ibm64ieee32(ibm):
     ieee = ieee32_from_fraction(*fraction_from_ibm64(int(ibm)))
     return np.uint32(ieee).view(np.float32)
+
 
 def ibm32ieee64(ibm):
     ieee = ieee64_from_fraction(*fraction_from_ibm32(int(ibm)))
     return np.uint64(ieee).view(np.float64)
 
+
 def ibm64ieee64(ibm):
     ieee = ieee64_from_fraction(*fraction_from_ibm64(int(ibm)))
     return np.uint64(ieee).view(np.float64)
-
-
 
 
 single_to_single_pairs = [
