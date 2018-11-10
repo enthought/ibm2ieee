@@ -1,6 +1,6 @@
 # Not importing Unicode literals, because the elements of __all__
 # need to be bytestrings in Python 2.
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import, print_function
 
 from .version import version as __version__
 from ._ibm2ieee import ibm2float32, ibm2float64
