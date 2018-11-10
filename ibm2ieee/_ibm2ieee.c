@@ -17,13 +17,13 @@
 #define IBM64_PREC 56
 
 #define IEEE32_PREC 24
-#define IEEE32_MAXEXP 254
-#define IEEE32_EXP_MIN (-149)
+#define IEEE32_MAXEXP 254  /* Maximum *biased* exponent for finite values. */
+#define IEEE32_EXP_MIN (-149)  /* Exponent of smallest power of two. */
 #define IEEE32_EXP1 ((npy_uint32)0x00800000U)
 
 #define IEEE64_PREC 53
-#define IEEE64_MAXEXP 2046
-#define IEEE64_EXP_MIN (-1074)
+#define IEEE64_MAXEXP 2046  /* Maximum biased exponent. */
+#define IEEE64_EXP_MIN (-1074)  /* Exponent of smallest power of two. */
 #define IEEE64_EXP1 ((npy_uint64)0x0010000000000000U)
 
 /* Minimum number of bits needed to represent n. Assumes n positive. */

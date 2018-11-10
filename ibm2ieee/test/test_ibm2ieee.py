@@ -174,6 +174,9 @@ single_to_single_pairs = [
     (0x61400000, float("inf")),
     (0x62100000, float("inf")),
     (0x7fffffff, float("inf")),
+
+    # From https://en.wikipedia.org/wiki/IBM_hexadecimal_floating_point
+    (0b11000010011101101010000000000000, -118.625),
 ]
 
 double_to_single_pairs = [
@@ -197,7 +200,6 @@ double_to_single_pairs = [
     for x, f in single_to_single_pairs
 ]
 
-#
 single_to_double_pairs = [
     (0x0, 0.0),
     (0x00000001, float.fromhex("0x1p-280")),
@@ -274,7 +276,7 @@ class TestIBM2IEEE(unittest.TestCase):
             pos_expected = np.float32(expected)
             self.assertFloatsIdentical(ibm2float32(pos_input), pos_expected)
 
-            neg_input = np.uint32(input + 0x80000000)
+            neg_input = np.uint32(input ^ 0x80000000)
             neg_expected = -np.float32(expected)
             self.assertFloatsIdentical(ibm2float32(neg_input), neg_expected)
 
@@ -284,7 +286,7 @@ class TestIBM2IEEE(unittest.TestCase):
             pos_expected = np.float32(expected)
             self.assertFloatsIdentical(ibm2float32(pos_input), pos_expected)
 
-            neg_input = np.uint64(input + 0x8000000000000000)
+            neg_input = np.uint64(input ^ 0x8000000000000000)
             neg_expected = -np.float32(expected)
             self.assertFloatsIdentical(ibm2float32(neg_input), neg_expected)
 
@@ -294,7 +296,7 @@ class TestIBM2IEEE(unittest.TestCase):
             pos_expected = np.float64(expected)
             self.assertFloatsIdentical(ibm2float64(pos_input), pos_expected)
 
-            neg_input = np.uint32(input + 0x80000000)
+            neg_input = np.uint32(input ^ 0x80000000)
             neg_expected = -np.float64(expected)
             self.assertFloatsIdentical(ibm2float64(neg_input), neg_expected)
 
@@ -304,7 +306,7 @@ class TestIBM2IEEE(unittest.TestCase):
             pos_expected = np.float64(expected)
             self.assertFloatsIdentical(ibm2float64(pos_input), pos_expected)
 
-            neg_input = np.uint64(input + 0x8000000000000000)
+            neg_input = np.uint64(input ^ 0x8000000000000000)
             neg_expected = -np.float64(expected)
             self.assertFloatsIdentical(ibm2float64(neg_input), neg_expected)
 
