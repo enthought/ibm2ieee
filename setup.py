@@ -21,6 +21,9 @@ ibm2ieee_extension = Extension(
     sources=[
         "ibm2ieee/_ibm2ieee.c",
     ],
+    define_macros=[
+        ("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION"),
+    ],
     include_dirs=[numpy.get_include()],
 )
 
@@ -29,7 +32,6 @@ Conversions from IBM hexadecimal floating-point to IEEE 754 floating-point.
 """
 
 # XXX Add README
-# XXX Get rid of deprecated NumPy API warning...
 
 if __name__ == "__main__":
     setup(
