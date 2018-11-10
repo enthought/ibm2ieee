@@ -3,14 +3,24 @@
 #include "numpy/ufuncobject.h"
 #include "numpy/npy_3kcompat.h"
 
-/* masks */
+/* format-related masks and constants */
 #define IBM32_SIGN ((npy_uint32)0x80000000U)
 #define IBM32_EXPT ((npy_uint32)0x7f000000U)
 #define IBM32_FRAC ((npy_uint32)0x00ffffffU)
+#define IBM32_PREC 24
 
 #define IBM64_SIGN ((npy_uint64)0x8000000000000000U)
 #define IBM64_EXPT ((npy_uint64)0x7f00000000000000U)
 #define IBM64_FRAC ((npy_uint64)0x00ffffffffffffffU)
+#define IBM64_PREC 56
+
+#define IEEE32_PREC 24
+#define IEEE32_MAXEXP 254
+#define IEEE32_EXP1 ((npy_uint32)0x00800000U)
+
+#define IEEE64_PREC 53
+#define IEEE64_MAXEXP 2046
+#define IEEE64_EXP1 ((npy_uint64)0x0010000000000000U)
 
 
 static int bitlength32(npy_uint32 n)
@@ -68,56 +78,135 @@ static npy_uint64 rshift_ties_to_even64(npy_uint64 n, int shift) {
 
 static npy_uint32 ibm32ieee32(npy_uint32 ibm)
 {
-  int exponent, target_exponent, shift;
-  npy_uint32 significand = ibm & IBM32_FRAC;
-  npy_uint32 sign = ibm & IBM32_SIGN;
+  int shift, shift_expt, shift_frac;
+  npy_uint32 ibm_frac;
+  npy_uint32 ieee_sign, ieee_expt, ieee_frac;
+
+  ieee_sign = ibm & IBM32_SIGN;
+  ibm_frac = ibm & IBM32_FRAC;
 
   /* Quick return for zeros. */
-  if (!significand) {
-    return sign;
+  if (!ibm_frac) {
+    return ieee_sign;
   }
 
-  exponent = ((ibm & IBM32_EXPT) >> 22) - 155;
-  target_exponent = exponent + bitlength32(significand);
-  if (target_exponent >= 254) {
-    target_exponent = 254;
-    significand = 0x800000U;
+  /* Shift the IBM fraction to get the IEEE fraction. shift_frac is the shift
+     amount that normalises the fraction; shift_expr gives us the minimum IEEE
+     exponent. We need the smaller of the two. */
+  /* 131 is 4*IBM_BIAS + IBM32_PREC + IEEE32_EXP_MIN */
+  shift_expt = ((ibm & IBM32_EXPT) >> (IBM32_PREC - 2)) - 131;
+  shift_frac = IEEE32_PREC - bitlength32(ibm_frac);
+  shift = shift_frac <= shift_expt ? shift_frac : shift_expt;
+
+  ieee_expt = shift_expt - shift;
+  ieee_frac = shift >= 0 ? ibm_frac << shift :
+    rshift_ties_to_even32(ibm_frac, -shift);
+  if (ieee_expt >= IEEE32_MAXEXP) {
+    /* overflow */
+    ieee_expt = IEEE32_MAXEXP;
+    ieee_frac = IEEE32_EXP1;
   }
-  else {
-    target_exponent = target_exponent >= 0 ? target_exponent : 0;
-    shift = exponent + 24 - target_exponent;
-    significand = shift >= 0 ? significand << shift :
-      rshift_ties_to_even32(significand, -shift);
-  }
-  return sign + ((npy_uint32)target_exponent << 23) + significand;
+  return ieee_sign + (ieee_expt << (IEEE32_PREC - 1)) + ieee_frac;
 }
 
 static npy_uint32 ibm64ieee32(npy_uint64 ibm)
 {
-  int exponent, target_exponent, shift;
-  npy_uint64 significand = ibm & IBM64_FRAC;
-  npy_uint32 sign = (ibm & IBM64_SIGN) >> 32;
+  int shift, shift_expt, shift_frac;
+  npy_uint64 ibm_frac;
+  npy_uint32 ieee_sign, ieee_expt, ieee_frac;
+
+  ieee_sign = (ibm & IBM64_SIGN) >> 32;
+  ibm_frac = ibm & IBM64_FRAC;
 
   /* Quick return for zeros. */
-  if (!significand) {
-    return sign;
+  if (!ibm_frac) {
+    return ieee_sign;
   }
 
-  exponent = ((ibm & IBM64_EXPT) >> 54) - 187;
-  target_exponent = exponent + bitlength64(significand);
-  if (target_exponent >= 254) {
-    target_exponent = 254;
-    significand = 0x800000U;
+  /* Shift the IBM fraction to get the IEEE fraction. shift_frac is the shift
+     amount that normalises the fraction; shift_expr gives us the minimum IEEE
+     exponent. We need the smaller of the two. */
+  /* 163 is 4*IBM_BIAS + IBM64_PREC + IEEE32_EXP_MIN */
+  shift_expt = ((ibm & IBM64_EXPT) >> (IBM64_PREC - 2)) - 163;
+  shift_frac = IEEE32_PREC - bitlength64(ibm_frac);
+  shift = shift_frac <= shift_expt ? shift_frac : shift_expt;
+
+  ieee_expt = shift_expt - shift;
+  ieee_frac = shift >= 0 ? ibm_frac << shift :
+    rshift_ties_to_even64(ibm_frac, -shift);
+  if (ieee_expt >= IEEE32_MAXEXP) {
+    /* overflow */
+    ieee_expt = IEEE32_MAXEXP;
+    ieee_frac = IEEE32_EXP1;
   }
-  else {
-    target_exponent = target_exponent >= 0 ? target_exponent : 0;
-    shift = exponent + 24 - target_exponent;
-    significand = shift >= 0 ? significand << shift :
-      rshift_ties_to_even64(significand, -shift);
-  }
-  return sign + ((npy_uint32)target_exponent << 23) + (npy_uint32)significand;
+  return ieee_sign + (ieee_expt << (IEEE32_PREC - 1)) + ieee_frac;
 }
 
+static npy_uint64 ibm32ieee64(npy_uint32 ibm)
+{
+  int shift, shift_expt, shift_frac;
+  npy_uint32 ibm_frac;
+  npy_uint64 ieee_sign, ieee_expt, ieee_frac;
+
+  ieee_sign = (npy_uint64)(ibm & IBM32_SIGN) << 32;
+  ibm_frac = ibm & IBM32_FRAC;
+
+  /* Quick return for zeros. */
+  if (!ibm_frac) {
+    return ieee_sign;
+  }
+
+  /* Shift the IBM fraction to get the IEEE fraction. shift_frac is the shift
+     amount that normalises the fraction; shift_expr gives us the minimum IEEE
+     exponent. We need the smaller of the two. */
+  /* -786 is 4*IBM_BIAS + IBM32_PREC + IEEE64_EXP_MIN; 22 is IBM32_PREC - 2 */
+  shift_expt = ((ibm & IBM32_EXPT) >> (IBM32_PREC - 2)) + 794;
+  shift_frac = IEEE64_PREC - bitlength32(ibm_frac);
+  shift = shift_frac <= shift_expt ? shift_frac : shift_expt;
+
+  ieee_expt = shift_expt - shift;
+  ieee_frac = shift >= 0 ? (npy_uint64)ibm_frac << shift :
+    rshift_ties_to_even32(ibm_frac, -shift);
+  if (ieee_expt >= IEEE64_MAXEXP) {
+    /* overflow */
+    ieee_expt = IEEE64_MAXEXP;
+    ieee_frac = IEEE64_EXP1;
+  }
+  return ieee_sign + (ieee_expt << (IEEE64_PREC - 1)) + ieee_frac;
+}
+
+static npy_uint64 ibm64ieee64(npy_uint64 ibm)
+{
+  int shift, shift_expt, shift_frac;
+  npy_uint64 ibm_frac;
+  npy_uint64 ieee_sign, ieee_expt, ieee_frac;
+
+  ieee_sign = ibm & IBM64_SIGN;
+  ibm_frac = ibm & IBM64_FRAC;
+
+  /* Quick return for zeros. */
+  if (!ibm_frac) {
+    return ieee_sign;
+  }
+
+  /* Shift the IBM fraction to get the IEEE fraction. shift_frac is the shift
+     amount that normalises the fraction; shift_expr gives us the minimum IEEE
+     exponent. We need the smaller of the two. */
+  /* -762 is 4*IBM_BIAS + IBM64_PREC + IEEE64_EXP_MIN */
+  shift_expt = ((ibm & IBM64_EXPT) >> (IBM64_PREC - 2)) + 762;
+  shift_frac = IEEE64_PREC - bitlength64(ibm_frac);
+  shift = shift_frac <= shift_expt ? shift_frac : shift_expt;
+
+  ieee_expt = shift_expt - shift;
+  ieee_frac = shift >= 0 ? ibm_frac << shift :
+    rshift_ties_to_even64(ibm_frac, -shift);
+  if (ieee_expt >= IEEE64_MAXEXP) {
+    /* overflow */
+    ieee_expt = IEEE64_MAXEXP;
+    ieee_frac = IEEE64_EXP1;
+  }
+  return ieee_sign + (ieee_expt << (IEEE64_PREC - 1)) + ieee_frac;
+}
 
 
 static PyMethodDef IBM2IEEEMethods[] = {
@@ -156,22 +245,72 @@ static void ibm64ieee32_ufunc(char **args, npy_intp *dimensions,
   }
 }
 
-PyUFuncGenericFunction funcs[2] = {
+
+static void ibm32ieee64_ufunc(char **args, npy_intp *dimensions,
+                       npy_intp* steps, void* data)
+{
+  npy_intp i;
+  npy_intp n = dimensions[0];
+  char *in = args[0], *out = args[1];
+  npy_intp in_step = steps[0], out_step = steps[1];
+
+  for (i = 0; i < n; i++) {
+    *((npy_uint64 *)out) = ibm32ieee64(*(npy_uint32 *)in);
+    in += in_step;
+    out += out_step;
+  }
+}
+
+
+static void ibm64ieee64_ufunc(char **args, npy_intp *dimensions,
+                        npy_intp* steps, void* data)
+{
+  npy_intp i;
+  npy_intp n = dimensions[0];
+  char *in = args[0], *out = args[1];
+  npy_intp in_step = steps[0], out_step = steps[1];
+
+  for (i = 0; i < n; i++) {
+    *((npy_uint64 *)out) = ibm64ieee64(*(npy_uint64 *)in);
+    in += in_step;
+    out += out_step;
+  }
+}
+
+PyUFuncGenericFunction float32_funcs[2] = {
   &ibm32ieee32_ufunc,
   &ibm64ieee32_ufunc,
 };
 
-static char types[4] = {
+static char float32_types[4] = {
   NPY_UINT32, NPY_FLOAT32,
   NPY_UINT64, NPY_FLOAT32
 };
 
-static void *data[2] = {
+static void *float32_data[2] = {
   NULL,
   NULL
 };
 
+
+PyUFuncGenericFunction float64_funcs[2] = {
+  &ibm32ieee64_ufunc,
+  &ibm64ieee64_ufunc,
+};
+
+static char float64_types[4] = {
+  NPY_UINT32, NPY_FLOAT64,
+  NPY_UINT64, NPY_FLOAT64
+};
+
+static void *float64_data[2] = {
+  NULL,
+  NULL
+};
+
+
 #if PY_VERSION_HEX >= 0x03000000
+
 static struct PyModuleDef moduledef = {
   PyModuleDef_HEAD_INIT,
   "ibm2ieee",
@@ -186,47 +325,60 @@ static struct PyModuleDef moduledef = {
 
 PyMODINIT_FUNC PyInit_ibm2ieee(void)
 {
-  PyObject *m, *ibm2float32, *d;
+  PyObject *m, *d;
+  PyObject *ibm2float32, *ibm2float64;
+
   m = PyModule_Create(&moduledef);
   if (!m) {
     return NULL;
   }
+  d = PyModule_GetDict(m);
 
   import_array();
   import_umath();
 
-  ibm2float32 = PyUFunc_FromFuncAndData(funcs, data, types, 2, 1, 1,
-                                        PyUFunc_None, "ibm2float32",
-                                        "docstring", 0);
-
-  d = PyModule_GetDict(m);
-
+  ibm2float32 = PyUFunc_FromFuncAndData(
+    float32_funcs, float32_data, float32_types, 2, 1, 1,
+    PyUFunc_None, "ibm2float32", "ibm2float32_docstring", 0);
   PyDict_SetItemString(d, "ibm2float32", ibm2float32);
   Py_DECREF(ibm2float32);
 
+  ibm2float64 = PyUFunc_FromFuncAndData(
+    float64_funcs, float64_data, float64_types, 2, 1, 1,
+    PyUFunc_None, "ibm2float64", "ibm2float64_docstring", 0);
+  PyDict_SetItemString(d, "ibm2float64", ibm2float64);
+  Py_DECREF(ibm2float64);
+
   return m;
 }
-#else
+
+#else  /* PY_VERSION_HEX >= 0x03000000 */
+
 PyMODINIT_FUNC initibm2ieee(void)
 {
-  PyObject *m, *ibm2ieee32, *d;
-
+  PyObject *m, *d;
+  PyObject *ibm2float32, *ibm2float64;
 
   m = Py_InitModule("ibm2ieee", IBM2IEEEMethods);
   if (m == NULL) {
     return;
   }
+  d = PyModule_GetDict(m);
 
   import_array();
   import_umath();
 
-  ibm2ieee32 = PyUFunc_FromFuncAndData(funcs, data, types, 1, 1, 1,
-                                  PyUFunc_None, "ibm2ieee32",
-                                  "ibm2ieee32_docstring", 0);
+  ibm2float32 = PyUFunc_FromFuncAndData(
+    float32_funcs, float32_data, float32_types, 2, 1, 1,
+    PyUFunc_None, "ibm2float32", "ibm2float32_docstring", 0);
+  PyDict_SetItemString(d, "ibm2float32", ibm2float32);
+  Py_DECREF(ibm2float32);
 
-  d = PyModule_GetDict(m);
-
-  PyDict_SetItemString(d, "ibm2ieee32", ibm2ieee32);
-  Py_DECREF(ibm2ieee32);
+  ibm2float64 = PyUFunc_FromFuncAndData(
+    float64_funcs, float64_data, float64_types, 2, 1, 1,
+    PyUFunc_None, "ibm2float64", "ibm2float64_docstring", 0);
+  PyDict_SetItemString(d, "ibm2float64", ibm2float64);
+  Py_DECREF(ibm2float64);
 }
-#endif
+
+#endif  /* PY_VERSION_HEX >= 0x03000000 */
