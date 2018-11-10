@@ -3,6 +3,15 @@
 #include "numpy/ufuncobject.h"
 #include "numpy/npy_3kcompat.h"
 
+/* masks */
+#define IBM32_SIGN ((npy_uint32)0x80000000U)
+#define IBM32_EXPT ((npy_uint32)0x7f000000U)
+#define IBM32_FRAC ((npy_uint32)0x00ffffffU)
+
+#define IBM64_SIGN ((npy_uint64)0x8000000000000000U)
+#define IBM64_EXPT ((npy_uint64)0x7f00000000000000U)
+#define IBM64_FRAC ((npy_uint64)0x00ffffffffffffffU)
+
 
 static int bitlength32(npy_uint32 n)
 {
@@ -14,18 +23,99 @@ static int bitlength32(npy_uint32 n)
   return n_bits;
 }
 
-static npy_uint32 rshift_ties_to_even(npy_uint32 n, int shift) {
+static int bitlength64(npy_uint64 n)
+{
+  int n_bits = 0;
+  while (n) {
+    n >>= 1;
+    n_bits += 1;
+  }
+  return n_bits;
+}
+
+/* right shift with rounded result, using round-ties-to-even.
+
+   Returns the closest integer to n / 2**shift, rounding ties
+   to even. shift must be positive. */
+
+static npy_uint32 rshift_ties_to_even32(npy_uint32 n, int shift) {
   npy_uint32 mask, has_remainder, is_odd;
 
   if (shift > 32) {
-    return 0U;
+    return 0;
   }
-  mask = ~((~0U) << (shift - 1));
+  mask = ~((~(npy_uint32)0) << (shift - 1));
   has_remainder = !!(n & mask);
   n >>= shift - 1;
   is_odd = !!(n & 2);
   n += (is_odd | has_remainder);
   return n >> 1;
+}
+
+static npy_uint64 rshift_ties_to_even64(npy_uint64 n, int shift) {
+  npy_uint64 mask, has_remainder, is_odd;
+
+  if (shift > 64) {
+    return 0;
+  }
+  mask = ~((~(npy_uint64)0) << (shift - 1));
+  has_remainder = !!(n & mask);
+  n >>= shift - 1;
+  is_odd = !!(n & 2);
+  n += (is_odd | has_remainder);
+  return n >> 1;
+}
+
+static npy_uint32 ibm32ieee32(npy_uint32 ibm)
+{
+  int exponent, target_exponent, shift;
+  npy_uint32 significand = ibm & IBM32_FRAC;
+  npy_uint32 sign = ibm & IBM32_SIGN;
+
+  /* Quick return for zeros. */
+  if (!significand) {
+    return sign;
+  }
+
+  exponent = ((ibm & IBM32_EXPT) >> 22) - 155;
+  target_exponent = exponent + bitlength32(significand);
+  if (target_exponent >= 254) {
+    target_exponent = 254;
+    significand = 0x800000U;
+  }
+  else {
+    target_exponent = target_exponent >= 0 ? target_exponent : 0;
+    shift = exponent + 24 - target_exponent;
+    significand = shift >= 0 ? significand << shift :
+      rshift_ties_to_even32(significand, -shift);
+  }
+  return sign + ((npy_uint32)target_exponent << 23) + significand;
+}
+
+static npy_uint32 ibm64ieee32(npy_uint64 ibm)
+{
+  int exponent, target_exponent, shift;
+  npy_uint64 significand = ibm & IBM64_FRAC;
+  npy_uint32 sign = (ibm & IBM64_SIGN) >> 32;
+
+  /* Quick return for zeros. */
+  if (!significand) {
+    return sign;
+  }
+
+  exponent = ((ibm & IBM64_EXPT) >> 54) - 187;
+  target_exponent = exponent + bitlength64(significand);
+  if (target_exponent >= 254) {
+    target_exponent = 254;
+    significand = 0x800000U;
+  }
+  else {
+    target_exponent = target_exponent >= 0 ? target_exponent : 0;
+    shift = exponent + 24 - target_exponent;
+    significand = shift >= 0 ? significand << shift :
+      rshift_ties_to_even64(significand, -shift);
+  }
+  return sign + ((npy_uint32)target_exponent << 23) + (npy_uint32)significand;
 }
 
 
@@ -35,7 +125,7 @@ static PyMethodDef IBM2IEEEMethods[] = {
 };
 
 
-static void ibm32ieee32(char **args, npy_intp *dimensions,
+static void ibm32ieee32_ufunc(char **args, npy_intp *dimensions,
                        npy_intp* steps, void* data)
 {
   npy_intp i;
@@ -44,38 +134,14 @@ static void ibm32ieee32(char **args, npy_intp *dimensions,
   npy_intp in_step = steps[0], out_step = steps[1];
 
   for (i = 0; i < n; i++) {
-    int target_exponent;
-    npy_uint32 tmp = *(npy_uint32 *)in;
-    npy_uint32 significand = tmp & (npy_uint32)0x00FFFFFFU;
-    npy_uint32 sign = tmp & (npy_uint32)0x80000000U;
-
-    if (significand) {
-      int exponent = ((tmp & (npy_uint32)0x7F000000U) >> 22) - 155;
-      target_exponent = exponent + bitlength32(significand);
-      if (target_exponent >= 254) {
-        target_exponent = 254;
-        significand = 0x800000U;
-      }
-      else {
-        int shift;
-        target_exponent = target_exponent >= 0 ? target_exponent : 0;
-        shift = exponent + 24 - target_exponent;
-        significand = shift >= 0 ? significand << shift :
-          rshift_ties_to_even(significand, -shift);
-      }
-    }
-    else {
-      target_exponent = 0;
-    }
-    *((npy_uint32 *)out) = sign + ((npy_uint32)target_exponent << 23) + significand;
-
+    *((npy_uint32 *)out) = ibm32ieee32(*(npy_uint32 *)in);
     in += in_step;
     out += out_step;
   }
 }
 
 
-static void ibm64ieee32(char **args, npy_intp *dimensions,
+static void ibm64ieee32_ufunc(char **args, npy_intp *dimensions,
                         npy_intp* steps, void* data)
 {
   npy_intp i;
@@ -84,80 +150,15 @@ static void ibm64ieee32(char **args, npy_intp *dimensions,
   npy_intp in_step = steps[0], out_step = steps[1];
 
   for (i = 0; i < n; i++) {
-    npy_uint64 tmp, significand;
-    npy_uint32 sign, significand_out, result;
-    int exponent;
-
-    tmp = *(npy_uint64 *)in;
-
-    significand = tmp & (npy_uint64)0x00FFFFFFFFFFFFFFU;
-    exponent = ((tmp & (npy_uint64)0x7F00000000000000U) >> 54) - 130;
-    sign = (tmp & (npy_uint64)0x8000000000000000U) >> 32;
-
-    if (significand) {
-      /* normalise */
-      while (significand < (npy_uint64)0x0080000000000000U) {
-        significand <<= 1;
-        exponent -= 1;
-      }
-
-      if (exponent <= 0) {
-        /* underflow */
-        if (exponent < -23) {
-          /* underflow to zero */
-          significand_out = 0U;
-          exponent = 0;
-        }
-        else {
-          /* underflow; apply round-ties-to-even */
-          npy_uint64 shift, mask, has_remainder, is_odd;
-          shift = 32 - exponent;
-          mask = ~((~(npy_uint64)0) << shift);
-          has_remainder = !!(significand & mask);
-          significand >>= shift;
-          is_odd = !!(significand & 2);
-          significand += (is_odd | has_remainder);
-          significand >>= 1;
-          significand_out = significand;
-          exponent = 0;
-        }
-      }
-      else if (exponent >= 255) {
-        /* overflow to infinity */
-        significand_out = 0U;
-        exponent = 255;
-      }
-      else {
-        npy_uint64 mask, has_remainder, is_odd;
-        significand -= 0x0080000000000000U;
-        /* Now have a 55-bit fraction; need a 23-bit fraction, so remove
-           32 bits, and round. */
-        mask = 0x7fffffffULL;
-        has_remainder = !!(significand & mask);
-        significand >>= 31;
-        is_odd = !!(significand & 2);
-        significand += (is_odd | has_remainder);
-        significand >>= 1;
-        significand_out = significand;
-      }
-    }
-    else {
-      /* zero */
-      significand_out = 0;
-      exponent = 0;
-    }
-    result = sign + ((npy_uint32)exponent << 23) + significand_out;
-
-    *((npy_uint32 *)out) = result;
-
+    *((npy_uint32 *)out) = ibm64ieee32(*(npy_uint64 *)in);
     in += in_step;
     out += out_step;
   }
 }
 
 PyUFuncGenericFunction funcs[2] = {
-  &ibm32ieee32,
-  &ibm64ieee32
+  &ibm32ieee32_ufunc,
+  &ibm64ieee32_ufunc,
 };
 
 static char types[4] = {
