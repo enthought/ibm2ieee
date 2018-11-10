@@ -55,38 +55,37 @@ bitlength64(npy_uint64 n)
 /* Right shift with result rounded using round-ties-to-even.
 
    Returns the closest integer to n / 2**shift, rounding ties to even. shift
-   must be positive. */
+   must be positive, but is permitted to exceed 31. */
 
 static npy_uint32
 rshift_ties_to_even32(npy_uint32 n, int shift)
 {
-    npy_uint32 mask, has_remainder, is_odd;
+    npy_uint32 trailing;
 
     if (shift > 32) {
-        return 0;
+        return 0U;
     }
-    mask = ~((~(npy_uint32)0) << (shift - 1));
-    has_remainder = !!(n & mask);
+    trailing = n & ~((~(npy_uint32)0) << (shift - 1));
     n >>= shift - 1;
-    is_odd = !!(n & 2);
-    n += (is_odd | has_remainder);
-    return n >> 1;
+    return (n + (trailing + (n & 2) > 0U)) >> 1;
 }
+
+/* Right shift with result rounded using round-ties-to-even.
+
+   Returns the closest integer to n / 2**shift, rounding ties to even. shift
+   must be positive, and is permitted to exceed 63. */
 
 static npy_uint64
 rshift_ties_to_even64(npy_uint64 n, int shift)
 {
-    npy_uint64 mask, has_remainder, is_odd;
+    npy_uint64 trailing;
 
     if (shift > 64) {
-        return 0;
+        return 0U;
     }
-    mask = ~((~(npy_uint64)0) << (shift - 1));
-    has_remainder = !!(n & mask);
+    trailing = n & ~((~(npy_uint64)0) << (shift - 1));
     n >>= shift - 1;
-    is_odd = !!(n & 2);
-    n += (is_odd | has_remainder);
-    return n >> 1;
+    return (n + (trailing + (n & 2) > 0U)) >> 1;
 }
 
 /* Convert IBM single-precision bit pattern to IEEE single-precision bit
