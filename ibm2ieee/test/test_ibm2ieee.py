@@ -35,7 +35,7 @@ def ilog2_fraction(f):
     if f <= 0:
         raise ValueError("Requires a positive fraction.")
     e = f.numerator.bit_length() - f.denominator.bit_length()
-    return e if F(2)**e <= f else e-1
+    return e if F(2)**e <= f else e - 1
 
 
 def fraction_from_ibm32(f):
@@ -305,6 +305,13 @@ class TestIBM2IEEE(unittest.TestCase):
             # XXX Doesn't check signs of zeros
             self.assertEqual(
                 actual, expected, msg="input: {:016x}".format(input))
+
+    def test_import_star(self):
+        locals = {}
+        exec("from ibm2ieee import *", locals, locals)
+        self.assertIn("ibm2float32", locals)
+        self.assertIn("ibm2float64", locals)
+        self.assertIn("__version__", locals)
 
     def test_np_info(self):
         output = six.moves.StringIO()
