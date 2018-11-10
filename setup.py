@@ -24,15 +24,32 @@ ibm2ieee_extension = Extension(
     include_dirs=[numpy.get_include()],
 )
 
-# XXX Fix documentation of ufuncs!
+SHORT_DESCRIPTION = """\
+Conversions from IBM hexadecimal floating-point to IEEE 754 floating-point.
+"""
+
 # XXX Add README
-# XXX Add description, long description, author, classifiers, dependencies, etc.
 # XXX Get rid of deprecated NumPy API warning...
-# XXX Check signs of zeros properly in tests.
 
 if __name__ == "__main__":
     setup(
         name="ibm2ieee",
+        version=version,
+        author="Enthought",
+        description=SHORT_DESCRIPTION,
+        install_requires=["numpy"],
         packages=find_packages(),
+        classifiers=[
+            "Development Status :: 3 - Alpha",
+            "Intended Audience :: Developers",
+            "License :: OSI Approved :: BSD License",
+            "Operating System :: OS Independent",
+            "Programming Language :: Python :: 2",
+            "Programming Language :: Python :: 2.7",
+            "Programming Language :: Python :: 3",
+            "Programming Language :: Python :: 3.5",
+            "Programming Language :: Python :: 3.6",
+            "Programming Language :: Python :: 3.7",
+        ],
         ext_modules=[ibm2ieee_extension],
     )
