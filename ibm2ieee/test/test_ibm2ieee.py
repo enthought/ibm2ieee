@@ -231,60 +231,58 @@ class TestIBM2IEEE(unittest.TestCase):
         for input, expected in single_to_single_pairs:
             pos_input = np.uint32(input)
             pos_expected = np.float32(expected)
-            self.assertEqual(ibm2float32(pos_input), pos_expected)
+            self.assertFloatsIdentical(ibm2float32(pos_input), pos_expected)
 
             neg_input = np.uint32(input + 0x80000000)
             neg_expected = -np.float32(expected)
-            self.assertEqual(ibm2float32(neg_input), neg_expected)
+            self.assertFloatsIdentical(ibm2float32(neg_input), neg_expected)
 
         # Comparison with Python for given inputs.
         inputs = [np.uint32(input) for input, _ in single_to_single_pairs]
         for input in inputs:
             actual = ibm2float32(input)
             expected = ibm32ieee32(input)
-            # XXX Doesn't check signs of zeros
-            self.assertEqual(actual, expected)
+            self.assertFloatsIdentical(actual, expected)
 
         # Random inputs
         inputs = np.random.randint(2**32, size=10000, dtype=np.uint32)
         for input in inputs:
             actual = ibm2float32(input)
             expected = ibm32ieee32(input)
-            # XXX Doesn't check signs of zeros
-            self.assertEqual(actual, expected)
+            self.assertFloatsIdentical(actual, expected)
 
     def test_double_to_single(self):
         for input, expected in double_to_single_pairs:
             pos_input = np.uint64(input)
             pos_expected = np.float32(expected)
 
-            self.assertEqual(ibm2float32(pos_input), pos_expected)
+            self.assertFloatsIdentical(ibm2float32(pos_input), pos_expected)
 
             neg_input = np.uint64(input + 0x8000000000000000)
             neg_expected = -np.float32(expected)
-            self.assertEqual(ibm2float32(neg_input), neg_expected)
+            self.assertFloatsIdentical(ibm2float32(neg_input), neg_expected)
 
     def test_single_to_double(self):
         for input, expected in single_to_double_pairs:
             pos_input = np.uint32(input)
             pos_expected = np.float64(expected)
 
-            self.assertEqual(ibm2float64(pos_input), pos_expected)
+            self.assertFloatsIdentical(ibm2float64(pos_input), pos_expected)
 
             neg_input = np.uint32(input + 0x80000000)
             neg_expected = -np.float64(expected)
-            self.assertEqual(ibm2float64(neg_input), neg_expected)
+            self.assertFloatsIdentical(ibm2float64(neg_input), neg_expected)
 
     def test_double_to_double(self):
         for input, expected in double_to_double_pairs:
             pos_input = np.uint64(input)
             pos_expected = np.float64(expected)
 
-            self.assertEqual(ibm2float64(pos_input), pos_expected)
+            self.assertFloatsIdentical(ibm2float64(pos_input), pos_expected)
 
             neg_input = np.uint64(input + 0x8000000000000000)
             neg_expected = -np.float64(expected)
-            self.assertEqual(ibm2float64(neg_input), neg_expected)
+            self.assertFloatsIdentical(ibm2float64(neg_input), neg_expected)
 
     def test_single_to_double_random_inputs(self):
         # Random inputs
@@ -292,9 +290,7 @@ class TestIBM2IEEE(unittest.TestCase):
         for input in inputs:
             actual = ibm2float64(input)
             expected = ibm32ieee64(input)
-            # XXX Doesn't check signs of zeros
-            self.assertEqual(
-                actual, expected, msg="input: {:016x}".format(input))
+            self.assertFloatsIdentical(actual, expected)
 
     def test_double_to_double_random_inputs(self):
         # Random inputs
@@ -302,9 +298,7 @@ class TestIBM2IEEE(unittest.TestCase):
         for input in inputs:
             actual = ibm2float64(input)
             expected = ibm64ieee64(input)
-            # XXX Doesn't check signs of zeros
-            self.assertEqual(
-                actual, expected, msg="input: {:016x}".format(input))
+            self.assertFloatsIdentical(actual, expected)
 
     def test_import_star(self):
         locals = {}
@@ -323,6 +317,14 @@ class TestIBM2IEEE(unittest.TestCase):
         with contextlib.closing(output):
             np.info(ibm2float64, output=output)
             self.assertIn("Examples", output.getvalue())
+
+    def assertFloatsIdentical(self, a, b):
+        # Assert that float instances are equal, and that if they're zero,
+        # then the signs match. N.B. we don't care about NaNs.
+        self.assertEqual(
+            (a, np.signbit(a)),
+            (b, np.signbit(b)),
+        )
 
 
 if __name__ == '__main__':
