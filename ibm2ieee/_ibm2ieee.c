@@ -297,7 +297,7 @@ ibm64ieee64_ufunc(char **args, npy_intp *dimensions, npy_intp *steps,
 }
 
 PyDoc_STRVAR(ibm2float32_docstring,
-"\
+             "\
 Convert IBM-format single- or double-precision float data, represented\n\
 using types np.uint32 or np.uint64 (respectively), to np.float32.\n\
 \n\
@@ -311,18 +311,18 @@ Examples\n\
 inf\n\
 ");
 
-PyUFuncGenericFunction float32_funcs[2] = {
+PyUFuncGenericFunction ibm2float32_funcs[2] = {
     &ibm32ieee32_ufunc,
     &ibm64ieee32_ufunc,
 };
 
-static char float32_types[4] = {NPY_UINT32, NPY_FLOAT32, NPY_UINT64,
-                                NPY_FLOAT32};
+static char ibm2float32_types[4] = {NPY_UINT32, NPY_FLOAT32, NPY_UINT64,
+                                    NPY_FLOAT32};
 
-static void *float32_data[2] = {NULL, NULL};
+static void *ibm2float32_data[2] = {NULL, NULL};
 
 PyDoc_STRVAR(ibm2float64_docstring,
-"\
+             "\
 Convert IBM-format single- or double-precision float data, represented\n\
 using types np.uint32 or np.uint64 (respectively), to np.float64.\n\
 \n\
@@ -336,15 +336,15 @@ Examples\n\
 3.402823669209385e+38\n\
 ");
 
-PyUFuncGenericFunction float64_funcs[2] = {
+PyUFuncGenericFunction ibm2float64_funcs[2] = {
     &ibm32ieee64_ufunc,
     &ibm64ieee64_ufunc,
 };
 
-static char float64_types[4] = {NPY_UINT32, NPY_FLOAT64, NPY_UINT64,
-                                NPY_FLOAT64};
+static char ibm2float64_types[4] = {NPY_UINT32, NPY_FLOAT64, NPY_UINT64,
+                                    NPY_FLOAT64};
 
-static void *float64_data[2] = {NULL, NULL};
+static void *ibm2float64_data[2] = {NULL, NULL};
 
 static PyMethodDef IBM2IEEEMethods[] = {{NULL, NULL, 0, NULL}};
 
@@ -376,14 +376,14 @@ PyInit__ibm2ieee(void)
     import_umath();
 
     ibm2float32 = PyUFunc_FromFuncAndData(
-        float32_funcs, float32_data, float32_types, 2, 1, 1, PyUFunc_None,
-        "ibm2float32", ibm2float32_docstring, 0);
+        ibm2float32_funcs, ibm2float32_data, ibm2float32_types, 2, 1, 1,
+        PyUFunc_None, "ibm2float32", ibm2float32_docstring, 0);
     PyDict_SetItemString(d, "ibm2float32", ibm2float32);
     Py_DECREF(ibm2float32);
 
     ibm2float64 = PyUFunc_FromFuncAndData(
-        float64_funcs, float64_data, float64_types, 2, 1, 1, PyUFunc_None,
-        "ibm2float64", ibm2float64_docstring, 0);
+        ibm2float64_funcs, ibm2float64_data, ibm2float64_types, 2, 1, 1,
+        PyUFunc_None, "ibm2float64", ibm2float64_docstring, 0);
     PyDict_SetItemString(d, "ibm2float64", ibm2float64);
     Py_DECREF(ibm2float64);
 
@@ -408,14 +408,14 @@ init_ibm2ieee(void)
     import_umath();
 
     ibm2float32 = PyUFunc_FromFuncAndData(
-        float32_funcs, float32_data, float32_types, 2, 1, 1, PyUFunc_None,
-        "ibm2float32", ibm2float32_docstring, 0);
+        ibm2float32_funcs, ibm2float32_data, ibm2float32_types, 2, 1, 1,
+        PyUFunc_None, "ibm2float32", ibm2float32_docstring, 0);
     PyDict_SetItemString(d, "ibm2float32", ibm2float32);
     Py_DECREF(ibm2float32);
 
     ibm2float64 = PyUFunc_FromFuncAndData(
-        float64_funcs, float64_data, float64_types, 2, 1, 1, PyUFunc_None,
-        "ibm2float64", ibm2float64_docstring, 0);
+        ibm2float64_funcs, ibm2float64_data, ibm2float64_types, 2, 1, 1,
+        PyUFunc_None, "ibm2float64", ibm2float64_docstring, 0);
     PyDict_SetItemString(d, "ibm2float64", ibm2float64);
     Py_DECREF(ibm2float64);
 }
