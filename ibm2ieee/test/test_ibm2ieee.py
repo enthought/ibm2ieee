@@ -1,6 +1,7 @@
 from __future__ import (
     absolute_import, division, print_function, unicode_literals)
 
+import contextlib
 from fractions import Fraction as F
 import unittest
 
@@ -304,6 +305,17 @@ class TestIBM2IEEE(unittest.TestCase):
             # XXX Doesn't check signs of zeros
             self.assertEqual(
                 actual, expected, msg="input: {:016x}".format(input))
+
+    def test_np_info(self):
+        output = six.moves.StringIO()
+        with contextlib.closing(output):
+            np.info(ibm2float32, output=output)
+            self.assertIn("Examples", output.getvalue())
+
+        output = six.moves.StringIO()
+        with contextlib.closing(output):
+            np.info(ibm2float64, output=output)
+            self.assertIn("Examples", output.getvalue())
 
 
 if __name__ == '__main__':
