@@ -321,7 +321,7 @@ static PyMethodDef IBM2IEEEMethods[] = {{NULL, NULL, 0, NULL}};
 #if PY_VERSION_HEX >= 0x03000000
 
 static struct PyModuleDef moduledef = {PyModuleDef_HEAD_INIT,
-                                       "ibm2ieee",
+                                       "_ibm2ieee",
                                        NULL,
                                        -1,
                                        IBM2IEEEMethods,
@@ -331,7 +331,7 @@ static struct PyModuleDef moduledef = {PyModuleDef_HEAD_INIT,
                                        NULL};
 
 PyMODINIT_FUNC
-PyInit_ibm2ieee(void)
+PyInit__ibm2ieee(void)
 {
     PyObject *m, *d;
     PyObject *ibm2float32, *ibm2float64;
@@ -363,12 +363,12 @@ PyInit_ibm2ieee(void)
 #else /* PY_VERSION_HEX >= 0x03000000 */
 
 PyMODINIT_FUNC
-initibm2ieee(void)
+init_ibm2ieee(void)
 {
     PyObject *m, *d;
     PyObject *ibm2float32, *ibm2float64;
 
-    m = Py_InitModule("ibm2ieee", IBM2IEEEMethods);
+    m = Py_InitModule("_ibm2ieee", IBM2IEEEMethods);
     if (m == NULL) {
         return;
     }

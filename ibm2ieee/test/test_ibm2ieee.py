@@ -3,7 +3,7 @@ import unittest
 
 import numpy as np
 
-from npufunc_directory.ibm2ieee import ibm2float32, ibm2float64
+from ibm2ieee import ibm2float32, ibm2float64
 
 # Two as a fraction, so that TWO**n is an exact operation for any n.
 TWO = F(2)
