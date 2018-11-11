@@ -4,27 +4,25 @@
 
 /* Various format-related masks and constants */
 
-#define IBM_BIAS 64
-
 #define IBM32_SIGN ((npy_uint32)0x80000000U)
 #define IBM32_EXPT ((npy_uint32)0x7f000000U)
 #define IBM32_FRAC ((npy_uint32)0x00ffffffU)
+#define IBM32_BIAS 64
 #define IBM32_PREC 24
 
 #define IBM64_SIGN ((npy_uint64)0x8000000000000000U)
 #define IBM64_EXPT ((npy_uint64)0x7f00000000000000U)
 #define IBM64_FRAC ((npy_uint64)0x00ffffffffffffffU)
+#define IBM64_BIAS 64
 #define IBM64_PREC 56
 
 #define IEEE32_PREC 24
-#define IEEE32_MAXEXP 254  /* Maximum *biased* exponent for finite values. */
-#define IEEE32_EXP_MIN (-149)  /* Exponent of smallest power of two. */
+#define IEEE32_MAXEXP 254     /* Maximum biased exponent for finite values. */
+#define IEEE32_EXP_MIN (-149) /* Exponent of smallest power of two. */
 #define IEEE32_EXP1 ((npy_uint32)0x00800000U)
 
 #define IEEE64_PREC 53
-#define IEEE64_MAXEXP 2046  /* Maximum biased exponent. */
-#define IEEE64_EXP_MIN (-1074)  /* Exponent of smallest power of two. */
-#define IEEE64_EXP1 ((npy_uint64)0x0010000000000000U)
+#define IEEE64_EXP_MIN (-1074) /* Exponent of smallest power of two. */
 
 /* Minimum number of bits needed to represent n. Assumes n positive. */
 
@@ -89,11 +87,13 @@ rshift_ties_to_even64(npy_uint64 n, int shift)
 }
 
 /* Convert IBM single-precision bit pattern to IEEE single-precision bit
- * pattern. */
+   pattern. */
 
 static npy_uint32
 ibm32ieee32(npy_uint32 ibm)
 {
+    /* Overflow and underflow possible; rounding can only happen
+       in subnormal cases. */
     int shift, shift_expt, shift_frac;
     npy_uint32 ibm_frac;
     npy_uint32 ieee_sign, ieee_expt, ieee_frac;
@@ -107,7 +107,7 @@ ibm32ieee32(npy_uint32 ibm)
     }
 
     shift_expt = ((ibm & IBM32_EXPT) >> (IBM32_PREC - 2)) -
-                 (4 * IBM_BIAS + IBM32_PREC + IEEE32_EXP_MIN);
+                 (4 * IBM32_BIAS + IBM32_PREC + IEEE32_EXP_MIN);
     shift_frac = IEEE32_PREC - bitlength32(ibm_frac);
     shift = shift_frac <= shift_expt ? shift_frac : shift_expt;
 
@@ -123,11 +123,13 @@ ibm32ieee32(npy_uint32 ibm)
 }
 
 /* Convert IBM double-precision bit pattern to IEEE single-precision bit
- * pattern. */
+   pattern. */
 
 static npy_uint32
 ibm64ieee32(npy_uint64 ibm)
 {
+    /* Overflow and underflow possible; rounding can occur in both
+       normal and subnormal cases. */
     int shift, shift_expt, shift_frac;
     npy_uint64 ibm_frac;
     npy_uint32 ieee_sign, ieee_expt, ieee_frac;
@@ -141,7 +143,7 @@ ibm64ieee32(npy_uint64 ibm)
     }
 
     shift_expt = ((ibm & IBM64_EXPT) >> (IBM64_PREC - 2)) -
-                 (4 * IBM_BIAS + IBM64_PREC + IEEE32_EXP_MIN);
+                 (4 * IBM64_BIAS + IBM64_PREC + IEEE32_EXP_MIN);
     shift_frac = IEEE32_PREC - bitlength64(ibm_frac);
     shift = shift_frac <= shift_expt ? shift_frac : shift_expt;
 
@@ -157,12 +159,15 @@ ibm64ieee32(npy_uint64 ibm)
 }
 
 /* Convert IBM single-precision bit pattern to IEEE double-precision bit
- * pattern. */
+   pattern. */
 
 static npy_uint64
 ibm32ieee64(npy_uint32 ibm)
 {
-    int shift, shift_expt, shift_frac;
+    /* This is the simplest of the four cases: there's no need to check for
+       overflow or underflow, no possibility of subnormal output, and never
+       any rounding. */
+    int shift;
     npy_uint32 ibm_frac;
     npy_uint64 ieee_sign, ieee_expt, ieee_frac;
 
@@ -174,29 +179,23 @@ ibm32ieee64(npy_uint32 ibm)
         return ieee_sign;
     }
 
-    shift_expt = ((ibm & IBM32_EXPT) >> (IBM32_PREC - 2)) -
-                 (4 * IBM_BIAS + IBM32_PREC + IEEE64_EXP_MIN);
-    shift_frac = IEEE64_PREC - bitlength32(ibm_frac);
-    shift = shift_frac <= shift_expt ? shift_frac : shift_expt;
-
-    ieee_expt = shift_expt - shift;
-    ieee_frac = shift >= 0 ? (npy_uint64)ibm_frac << shift
-                           : rshift_ties_to_even32(ibm_frac, -shift);
-    if (ieee_expt >= IEEE64_MAXEXP) {
-        /* overflow */
-        ieee_expt = IEEE64_MAXEXP;
-        ieee_frac = IEEE64_EXP1;
-    }
+    shift = IEEE64_PREC - bitlength32(ibm_frac);
+    ieee_expt = ((ibm & IBM32_EXPT) >> (IBM32_PREC - 2)) - shift -
+                (4 * IBM32_BIAS + IBM32_PREC + IEEE64_EXP_MIN);
+    ieee_frac = (npy_uint64)ibm_frac << shift;
     return ieee_sign + (ieee_expt << (IEEE64_PREC - 1)) + ieee_frac;
 }
 
 /* Convert IBM double-precision bit pattern to IEEE double-precision bit
- * pattern. */
+   pattern. */
 
 static npy_uint64
 ibm64ieee64(npy_uint64 ibm)
 {
-    int shift, shift_expt, shift_frac;
+    /* No overflow or underflow possible, but the precision of the
+       IBM double-precision format exceeds that of its IEEE counterpart,
+       so we'll frequently need to round. */
+    int shift;
     npy_uint64 ibm_frac;
     npy_uint64 ieee_sign, ieee_expt, ieee_frac;
 
@@ -208,19 +207,11 @@ ibm64ieee64(npy_uint64 ibm)
         return ieee_sign;
     }
 
-    shift_expt = ((ibm & IBM64_EXPT) >> (IBM64_PREC - 2)) -
-                 (4 * IBM_BIAS + IBM64_PREC + IEEE64_EXP_MIN);
-    shift_frac = IEEE64_PREC - bitlength64(ibm_frac);
-    shift = shift_frac <= shift_expt ? shift_frac : shift_expt;
-
-    ieee_expt = shift_expt - shift;
+    shift = IEEE64_PREC - bitlength64(ibm_frac);
+    ieee_expt = ((ibm & IBM64_EXPT) >> (IBM64_PREC - 2)) -
+                (4 * IBM64_BIAS + IBM64_PREC + IEEE64_EXP_MIN) - shift;
     ieee_frac = shift >= 0 ? ibm_frac << shift
                            : rshift_ties_to_even64(ibm_frac, -shift);
-    if (ieee_expt >= IEEE64_MAXEXP) {
-        /* overflow */
-        ieee_expt = IEEE64_MAXEXP;
-        ieee_frac = IEEE64_EXP1;
-    }
     return ieee_sign + (ieee_expt << (IEEE64_PREC - 1)) + ieee_frac;
 }
 
