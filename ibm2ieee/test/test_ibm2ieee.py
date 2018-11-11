@@ -140,6 +140,20 @@ single_to_single_pairs = [
     (0x1b800000, float.fromhex("0x1p-149")),
     (0x1bbfffff, float.fromhex("0x1p-149")),
     (0x1bc00000, float.fromhex("0x2p-149")),
+    # Checking round-ties-to-even behaviour on a mid-range subnormal
+    (0x1da7bfff, float.fromhex("0x14fp-149")),
+    (0x1da7c000, float.fromhex("0x150p-149")),
+    (0x1da84000, float.fromhex("0x150p-149")),
+    (0x1da84001, float.fromhex("0x151p-149")),
+    (0x1da8bfff, float.fromhex("0x151p-149")),
+    (0x1da8c000, float.fromhex("0x152p-149")),
+    (0x1da94000, float.fromhex("0x152p-149")),
+    (0x1da94001, float.fromhex("0x153p-149")),
+    (0x1da9bfff, float.fromhex("0x153p-149")),
+    (0x1da9c000, float.fromhex("0x154p-149")),
+    (0x1daa4000, float.fromhex("0x154p-149")),
+    (0x1daa4001, float.fromhex("0x155p-149")),
+
     (0x1fffffff, float.fromhex("0x1p-132")),
     (0x20fffff4, float.fromhex("0x0.fffff0p-128")),
     (0x20fffff5, float.fromhex("0x0.fffff8p-128")),
@@ -195,6 +209,14 @@ double_to_single_pairs = [
     (0x60ffffff7fffffff, float.fromhex("0x0.ffffffp+128")),
     (0x60ffffff80000000, float("inf")),
     (0x7fffffffffffffff, float("inf")),
+    # Values that would produce the wrong answer under double rounding
+    # (rounding first to 24-bit precision, then to subnormal).
+    (0x1da7bfffffffffff, float.fromhex("0x14fp-149")),
+    (0x1da8400000000001, float.fromhex("0x151p-149")),
+    (0x1da8bfffffffffff, float.fromhex("0x151p-149")),
+    (0x1da9400000000001, float.fromhex("0x153p-149")),
+    (0x1da9bfffffffffff, float.fromhex("0x153p-149")),
+    (0x1daa400000000001, float.fromhex("0x155p-149")),
 ] + [
     (x << 32, f)
     for x, f in single_to_single_pairs
@@ -213,47 +235,54 @@ double_to_double_pairs = [
     (0x0000000000000002, float.fromhex("0x2p-312")),
     (0x0000000000000003, float.fromhex("0x3p-312")),
 
+    # Rounding boundaries near powers of two.
+    (0x400ffffffffffffe, float.fromhex("0x1.ffffffffffffcp-5")),
     (0x400fffffffffffff, float.fromhex("0x1.ffffffffffffep-5")),
-    (0x4010000000000000, 0.0625),
+    (0x4010000000000000, float.fromhex("0x1.0000000000000p-4")),
     (0x4010000000000001, float.fromhex("0x1.0000000000001p-4")),
+    (0x4010000000000002, float.fromhex("0x1.0000000000002p-4")),
 
+    (0x401ffffffffffffe, float.fromhex("0x1.ffffffffffffep-4")),
     (0x401fffffffffffff, float.fromhex("0x1.fffffffffffffp-4")),
-    (0x4020000000000000, 0.125),
-    (0x4020000000000001, 0.125),
+    (0x4020000000000000, float.fromhex("0x1.0000000000000p-3")),
+    (0x4020000000000001, float.fromhex("0x1.0000000000000p-3")),
     (0x4020000000000002, float.fromhex("0x1.0000000000001p-3")),
+    (0x4020000000000003, float.fromhex("0x1.0000000000002p-3")),
 
+    (0x403ffffffffffffd, float.fromhex("0x1.ffffffffffffep-3")),
     (0x403ffffffffffffe, float.fromhex("0x1.fffffffffffffp-3")),
-    (0x403fffffffffffff, 0.25),
-    (0x4040000000000000, 0.25),
-    (0x4040000000000001, 0.25),
-    (0x4040000000000002, 0.25),
+    (0x403fffffffffffff, float.fromhex("0x1.0000000000000p-2")),
+    (0x4040000000000002, float.fromhex("0x1.0000000000000p-2")),
     (0x4040000000000003, float.fromhex("0x1.0000000000001p-2")),
+    (0x4040000000000005, float.fromhex("0x1.0000000000001p-2")),
+    (0x4040000000000006, float.fromhex("0x1.0000000000002p-2")),
 
+    (0x407ffffffffffffa, float.fromhex("0x1.ffffffffffffep-2")),
+    (0x407ffffffffffffb, float.fromhex("0x1.fffffffffffffp-2")),
     (0x407ffffffffffffd, float.fromhex("0x1.fffffffffffffp-2")),
-    (0x407ffffffffffffe, 0.5),
-    (0x407fffffffffffff, 0.5),
-    (0x4080000000000000, 0.5),
-    (0x4080000000000001, 0.5),
-    (0x4080000000000002, 0.5),
-    (0x4080000000000003, 0.5),
-    (0x4080000000000004, 0.5),
+    (0x407ffffffffffffe, float.fromhex("0x1.0000000000000p-1")),
+    (0x4080000000000004, float.fromhex("0x1.0000000000000p-1")),
     (0x4080000000000005, float.fromhex("0x1.0000000000001p-1")),
+    (0x408000000000000b, float.fromhex("0x1.0000000000001p-1")),
+    (0x408000000000000c, float.fromhex("0x1.0000000000002p-1")),
 
+    (0x40fffffffffffff4, float.fromhex("0x1.ffffffffffffep-1")),
+    (0x40fffffffffffff5, float.fromhex("0x1.fffffffffffffp-1")),
     (0x40fffffffffffffb, float.fromhex("0x1.fffffffffffffp-1")),
-    (0x40fffffffffffffc, 1.0),
-    (0x40fffffffffffffd, 1.0),
-    (0x40fffffffffffffe, 1.0),
-    (0x40ffffffffffffff, 1.0),
+    (0x40fffffffffffffc, float.fromhex("0x1.0000000000000p+0")),
+
     (0x4110000000000000, 1.0),
     (0x4110000000000001, float.fromhex("0x1.0000000000001p+0")),
     (0x4110000000000002, float.fromhex("0x1.0000000000002p+0")),
-
     (0x411fffffffffffff, float.fromhex("0x1.fffffffffffffp+0")),
     (0x4120000000000000, 2.0),
     (0x4120000000000001, 2.0),
     (0x4120000000000002, float.fromhex("0x1.0000000000001p+1")),
 
     (0x567faef3ff3dc282, float.fromhex("0x1.febbcffcf70a0p+86")),
+
+    (0x7ffffffffffffff4, float.fromhex("0x1.ffffffffffffep+251")),
+    (0x7ffffffffffffff5, float.fromhex("0x1.fffffffffffffp+251")),
     (0x7ffffffffffffffb, float.fromhex("0x1.fffffffffffffp+251")),
     (0x7ffffffffffffffc, float.fromhex("0x1p+252")),
     (0x7ffffffffffffffd, float.fromhex("0x1p+252")),
@@ -267,7 +296,7 @@ double_to_double_pairs = [
 
 class TestIBM2IEEE(unittest.TestCase):
     def setUp(self):
-        self.random = np.random.RandomState(seed=61669)
+        self.random = np.random.RandomState(seed=616692)
 
     def test_single_to_single(self):
         # Inputs with known outputs.
@@ -312,7 +341,7 @@ class TestIBM2IEEE(unittest.TestCase):
 
     def test_single_to_single_random_inputs(self):
         # Random inputs
-        inputs = self.random.randint(2**32, size=10000, dtype=np.uint32)
+        inputs = self.random.randint(2**32, size=32768, dtype=np.uint32)
         for input in inputs:
             actual = ibm2float32(input)
             expected = ibm32ieee32(input)
@@ -320,7 +349,7 @@ class TestIBM2IEEE(unittest.TestCase):
 
     def test_double_to_single_random_inputs(self):
         # Random inputs
-        inputs = self.random.randint(2**64, size=10000, dtype=np.uint64)
+        inputs = self.random.randint(2**64, size=32768, dtype=np.uint64)
         for input in inputs:
             actual = ibm2float32(input)
             expected = ibm64ieee32(input)
@@ -328,7 +357,7 @@ class TestIBM2IEEE(unittest.TestCase):
 
     def test_single_to_double_random_inputs(self):
         # Random inputs
-        inputs = self.random.randint(2**32, size=10000, dtype=np.uint32)
+        inputs = self.random.randint(2**32, size=32768, dtype=np.uint32)
         for input in inputs:
             actual = ibm2float64(input)
             expected = ibm32ieee64(input)
@@ -336,7 +365,7 @@ class TestIBM2IEEE(unittest.TestCase):
 
     def test_double_to_double_random_inputs(self):
         # Random inputs
-        inputs = self.random.randint(2**64, size=10000, dtype=np.uint64)
+        inputs = self.random.randint(2**64, size=32768, dtype=np.uint64)
         for input in inputs:
             actual = ibm2float64(input)
             expected = ibm64ieee64(input)
