@@ -208,6 +208,7 @@ double_to_single_pairs = [
     (0x411fffffffffffff, 2.0),
     (0x60ffffff7fffffff, float.fromhex("0x0.ffffffp+128")),
     (0x60ffffff80000000, float("inf")),
+    (0x60ffffffffffffff, float("inf")),
     (0x7fffffffffffffff, float("inf")),
     # Values that would produce the wrong answer under double rounding
     # (rounding first to 24-bit precision, then to subnormal).

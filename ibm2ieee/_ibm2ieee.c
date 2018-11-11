@@ -19,7 +19,7 @@
 #define IEEE32_PREC 24
 #define IEEE32_MAXEXP 254     /* Maximum biased exponent for finite values. */
 #define IEEE32_EXP_MIN (-149) /* Exponent of smallest power of two. */
-#define IEEE32_EXP1 ((npy_uint32)0x00800000U)
+#define IEEE32_INFINITY ((npy_uint32)0x7f800000U)
 
 #define IEEE64_PREC 53
 #define IEEE64_EXP_MIN (-1074) /* Exponent of smallest power of two. */
@@ -115,9 +115,8 @@ ibm32ieee32(npy_uint32 ibm)
     ieee_frac = shift >= 0 ? ibm_frac << shift
                            : rshift_ties_to_even32(ibm_frac, -shift);
     if (ieee_expt >= IEEE32_MAXEXP) {
-        /* overflow */
-        ieee_expt = IEEE32_MAXEXP;
-        ieee_frac = IEEE32_EXP1;
+        /* Overflow. All cases of overflow are caught here. */
+        return ieee_sign + IEEE32_INFINITY;
     }
     return ieee_sign + (ieee_expt << (IEEE32_PREC - 1)) + ieee_frac;
 }
@@ -151,9 +150,12 @@ ibm64ieee32(npy_uint64 ibm)
     ieee_frac = shift >= 0 ? ibm_frac << shift
                            : rshift_ties_to_even64(ibm_frac, -shift);
     if (ieee_expt >= IEEE32_MAXEXP) {
-        /* overflow */
-        ieee_expt = IEEE32_MAXEXP;
-        ieee_frac = IEEE32_EXP1;
+        /* Catch most cases of overflow. Some cases (where ieee_frac has been
+           rounded up to 2**24 by rshift_ties_to_even, and ieee_expt == 253),
+           don't get caught here, but instead end up in the main return below.
+           However, the IEEE 754 format is such that the correct infinity is
+           still returned in these cases. */
+        return ieee_sign + IEEE32_INFINITY;
     }
     return ieee_sign + (ieee_expt << (IEEE32_PREC - 1)) + ieee_frac;
 }
