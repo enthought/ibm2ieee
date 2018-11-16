@@ -7,12 +7,14 @@
 #define IBM32_SIGN ((npy_uint32)0x80000000U)
 #define IBM32_EXPT ((npy_uint32)0x7f000000U)
 #define IBM32_FRAC ((npy_uint32)0x00ffffffU)
+#define IBM32_TOP  ((npy_uint32)0x00f00000U)
 #define IBM32_BIAS 64
 #define IBM32_PREC 24
 
 #define IBM64_SIGN ((npy_uint64)0x8000000000000000U)
 #define IBM64_EXPT ((npy_uint64)0x7f00000000000000U)
 #define IBM64_FRAC ((npy_uint64)0x00ffffffffffffffU)
+#define IBM64_TOP  ((npy_uint64)0x00f0000000000000U)
 #define IBM64_BIAS 64
 #define IBM64_PREC 56
 
@@ -24,31 +26,9 @@
 #define IEEE64_PREC 53
 #define IEEE64_EXP_MIN (-1074) /* Exponent of smallest power of two. */
 
-/* Minimum number of bits needed to represent n. Assumes n positive. */
-
-static int
-bitlength32(npy_uint32 n)
-{
-    int n_bits = 0;
-    while (n) {
-        n >>= 1;
-        n_bits += 1;
-    }
-    return n_bits;
-}
-
-/* Minimum number of bits needed to represent n. Assumes n positive. */
-
-static int
-bitlength64(npy_uint64 n)
-{
-    int n_bits = 0;
-    while (n) {
-        n >>= 1;
-        n_bits += 1;
-    }
-    return n_bits;
-}
+/* Constant used to count number of leading bits in a nonzero hex digit
+   via `(BITCOUNT_MAGIC >> (hex_digit*2)) & 3U`. */
+#define BITCOUNT_MAGIC ((npy_uint32)0x00000055afU)
 
 /* Right shift with result rounded using round-ties-to-even.
 
@@ -95,7 +75,7 @@ ibm32ieee32(npy_uint32 ibm)
     /* Overflow and underflow possible; rounding can only happen
        in subnormal cases. */
     int shift, shift_expt, shift_frac;
-    npy_uint32 ibm_frac;
+    npy_uint32 ibm_frac, top_digit;
     npy_uint32 ieee_sign, ieee_expt, ieee_frac;
 
     ieee_sign = ibm & IBM32_SIGN;
@@ -108,7 +88,15 @@ ibm32ieee32(npy_uint32 ibm)
 
     shift_expt = ((ibm & IBM32_EXPT) >> (IBM32_PREC - 2)) -
                  (4 * IBM32_BIAS + IBM32_PREC + IEEE32_EXP_MIN);
-    shift_frac = IEEE32_PREC - bitlength32(ibm_frac);
+
+    /* Normalise if necessary (unlikely in typical input) */
+    top_digit = ibm_frac & IBM32_TOP;
+    while (top_digit == 0) {
+        ibm_frac <<= 4;
+        shift_expt -= 4;
+        top_digit = ibm_frac & IBM32_TOP;
+    }
+    shift_frac = (BITCOUNT_MAGIC >> (top_digit >> (IBM32_PREC - 5))) & 3U;
     shift = shift_frac <= shift_expt ? shift_frac : shift_expt;
 
     ieee_expt = shift_expt - shift;
@@ -129,8 +117,8 @@ ibm64ieee32(npy_uint64 ibm)
 {
     /* Overflow and underflow possible; rounding can occur in both
        normal and subnormal cases. */
-    int shift, shift_expt, shift_frac;
-    npy_uint64 ibm_frac;
+    int shift, shift_digit, shift_expt, shift_frac;
+    npy_uint64 ibm_frac, top_digit;
     npy_uint32 ieee_sign, ieee_expt, ieee_frac;
 
     ieee_sign = (ibm & IBM64_SIGN) >> 32;
@@ -143,7 +131,18 @@ ibm64ieee32(npy_uint64 ibm)
 
     shift_expt = ((ibm & IBM64_EXPT) >> (IBM64_PREC - 2)) -
                  (4 * IBM64_BIAS + IBM64_PREC + IEEE32_EXP_MIN);
-    shift_frac = IEEE32_PREC - bitlength64(ibm_frac);
+
+    /* Normalise if necessary (unlikely in typical input) */
+    top_digit = ibm_frac & IBM64_TOP;
+    while (top_digit == 0) {
+        ibm_frac <<= 4;
+        shift_expt -= 4;
+        top_digit = ibm_frac & IBM64_TOP;
+    }
+
+    /* Find number of leading zero bits in top hex digit. */
+    shift_digit = (BITCOUNT_MAGIC >> (top_digit >> (IBM64_PREC - 5))) & 3U;
+    shift_frac = IEEE32_PREC - IBM64_PREC + shift_digit;
     shift = shift_frac <= shift_expt ? shift_frac : shift_expt;
 
     ieee_expt = shift_expt - shift;
@@ -169,8 +168,8 @@ ibm32ieee64(npy_uint32 ibm)
     /* This is the simplest of the four cases: there's no need to check for
        overflow or underflow, no possibility of subnormal output, and never
        any rounding. */
-    int shift;
-    npy_uint32 ibm_frac;
+    int shift, shift_digit, shift_expt;
+    npy_uint32 ibm_frac, top_digit;
     npy_uint64 ieee_sign, ieee_expt, ieee_frac;
 
     ieee_sign = (npy_uint64)(ibm & IBM32_SIGN) << 32;
@@ -181,9 +180,20 @@ ibm32ieee64(npy_uint32 ibm)
         return ieee_sign;
     }
 
-    shift = IEEE64_PREC - bitlength32(ibm_frac);
-    ieee_expt = ((ibm & IBM32_EXPT) >> (IBM32_PREC - 2)) - shift -
-                (4 * IBM32_BIAS + IBM32_PREC + IEEE64_EXP_MIN);
+    shift_expt = ((ibm & IBM32_EXPT) >> (IBM32_PREC - 2)) -
+                 (4 * IBM32_BIAS + IBM32_PREC + IEEE64_EXP_MIN);
+
+    /* Normalise if necessary (unlikely in typical input) */
+    top_digit = ibm_frac & IBM32_TOP;
+    while (top_digit == 0) {
+        ibm_frac <<= 4;
+        shift_expt -= 4;
+        top_digit = ibm_frac & IBM32_TOP;
+    }
+
+    shift_digit = (BITCOUNT_MAGIC >> (top_digit >> (IBM32_PREC - 5))) & 3U;
+    shift = IEEE64_PREC - IBM32_PREC + shift_digit;
+    ieee_expt = shift_expt - shift;
     ieee_frac = (npy_uint64)ibm_frac << shift;
     return ieee_sign + (ieee_expt << (IEEE64_PREC - 1)) + ieee_frac;
 }
@@ -197,8 +207,8 @@ ibm64ieee64(npy_uint64 ibm)
     /* No overflow or underflow possible, but the precision of the
        IBM double-precision format exceeds that of its IEEE counterpart,
        so we'll frequently need to round. */
-    int shift;
-    npy_uint64 ibm_frac;
+    int shift, shift_digit, shift_expt;
+    npy_uint64 ibm_frac, top_digit;
     npy_uint64 ieee_sign, ieee_expt, ieee_frac;
 
     ieee_sign = ibm & IBM64_SIGN;
@@ -209,9 +219,20 @@ ibm64ieee64(npy_uint64 ibm)
         return ieee_sign;
     }
 
-    shift = IEEE64_PREC - bitlength64(ibm_frac);
-    ieee_expt = ((ibm & IBM64_EXPT) >> (IBM64_PREC - 2)) -
-                (4 * IBM64_BIAS + IBM64_PREC + IEEE64_EXP_MIN) - shift;
+    shift_expt = ((ibm & IBM64_EXPT) >> (IBM64_PREC - 2)) -
+                 (4 * IBM64_BIAS + IBM64_PREC + IEEE64_EXP_MIN);
+
+    /* Normalise if necessary (unlikely in typical input) */
+    top_digit = ibm_frac & IBM64_TOP;
+    while (top_digit == 0) {
+        ibm_frac <<= 4;
+        shift_expt -= 4;
+        top_digit = ibm_frac & IBM64_TOP;
+    }
+    shift_digit = (BITCOUNT_MAGIC >> (top_digit >> (IBM64_PREC - 5))) & 3U;
+
+    shift = IEEE64_PREC - IBM64_PREC + shift_digit;
+    ieee_expt = shift_expt - shift;
     ieee_frac = shift >= 0 ? ibm_frac << shift
                            : rshift_ties_to_even64(ibm_frac, -shift);
     return ieee_sign + (ieee_expt << (IEEE64_PREC - 1)) + ieee_frac;
