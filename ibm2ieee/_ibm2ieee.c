@@ -28,7 +28,7 @@
 
 /* Constant used to count number of leading bits in a nonzero hex digit
    via `(BITCOUNT_MAGIC >> (hex_digit*2)) & 3U`. */
-#define BITCOUNT_MAGIC ((npy_uint32)0x00000055afU)
+#define BITCOUNT_MAGIC ((npy_uint32)0x000055afU)
 
 /* Right shift with result rounded using round-ties-to-even.
 
@@ -96,9 +96,9 @@ ibm32ieee32(npy_uint32 ibm)
         shift_expt -= 4;
         top_digit = ibm_frac & IBM32_TOP;
     }
+
     shift_frac = (BITCOUNT_MAGIC >> (top_digit >> (IBM32_PREC - 5))) & 3U;
     shift = shift_frac <= shift_expt ? shift_frac : shift_expt;
-
     ieee_expt = shift_expt - shift;
     ieee_frac = shift >= 0 ? ibm_frac << shift
                            : rshift_ties_to_even32(ibm_frac, -shift);
@@ -140,7 +140,6 @@ ibm64ieee32(npy_uint64 ibm)
         top_digit = ibm_frac & IBM64_TOP;
     }
 
-    /* Find number of leading zero bits in top hex digit. */
     shift_digit = (BITCOUNT_MAGIC >> (top_digit >> (IBM64_PREC - 5))) & 3U;
     shift_frac = IEEE32_PREC - IBM64_PREC + shift_digit;
     shift = shift_frac <= shift_expt ? shift_frac : shift_expt;
@@ -229,8 +228,8 @@ ibm64ieee64(npy_uint64 ibm)
         shift_expt -= 4;
         top_digit = ibm_frac & IBM64_TOP;
     }
-    shift_digit = (BITCOUNT_MAGIC >> (top_digit >> (IBM64_PREC - 5))) & 3U;
 
+    shift_digit = (BITCOUNT_MAGIC >> (top_digit >> (IBM64_PREC - 5))) & 3U;
     shift = IEEE64_PREC - IBM64_PREC + shift_digit;
     ieee_expt = shift_expt - shift;
     ieee_frac = shift >= 0 ? ibm_frac << shift
