@@ -1,3 +1,6 @@
+# Copyright (c) 2018, Enthought, Inc.
+# All rights reserved.
+
 import os
 from setuptools import Extension, find_packages, setup
 
