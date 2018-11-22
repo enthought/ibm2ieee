@@ -53,18 +53,25 @@ ibm32ieee32(npy_uint32 ibm)
         top_digit = ibm_frac & IBM32_TOP;
     }
     leading_zeros = (BITCOUNT_MAGIC >> (top_digit >> 19)) & 3U;
-
     ibm_frac <<= leading_zeros;
+
+    /* Adjust exponents for the differing biases of the formats: the IBM bias
+       is 64 hex digits, or 256 bits. The IEEE bias is 127. The difference is
+       -129; we get an extra -1 from the different significand representations
+       (0.f for IBM versus 1.f for IEEE), and another -1 to compensate for an
+       evil trick that saves an operation on the fast path: we don't remove the
+       hidden 1-bit from the IEEE significand, so in the final addition that
+       extra bit ends in incrementing the exponent by one. */
     ieee_expt = ibm_expt - 131 - leading_zeros;
 
-    if (ieee_expt >= IEEE32_MAXEXP) {
-        /* overflow */
-        return ieee_sign + IEEE32_INFINITY;
-    }
-    else if (ieee_expt >= 0) {
+    if (ieee_expt >= 0 && ieee_expt < IEEE32_MAXEXP) {
         /* normal case; no shift needed */
         ieee_frac = ibm_frac;
         return ieee_sign + ((npy_uint32)ieee_expt << 23) + ieee_frac;
+    }
+    else if (ieee_expt >= IEEE32_MAXEXP) {
+        /* overflow */
+        return ieee_sign + IEEE32_INFINITY;
     }
     else if (ieee_expt >= -32) {
         /* possible subnormal; shift right with round-ties-to-even */
@@ -114,15 +121,15 @@ ibm64ieee32(npy_uint64 ibm)
     ibm_frac <<= leading_zeros;
     ieee_expt = ibm_expt - 131 - leading_zeros;
 
-    if (ieee_expt >= IEEE32_MAXEXP) {
-        /* overflow */
-        return ieee_sign + IEEE32_INFINITY;
-    }
-    else if (ieee_expt >= 0) {
+    if (ieee_expt >= 0 && ieee_expt < IEEE32_MAXEXP) {
         /* normal case; shift right 32, with round-ties-to-even */
         int round_up = (ibm_frac & (npy_uint64)(0x17fffffff)) > 0;
         ieee_frac = ((ibm_frac >> 31) + round_up) >> 1;
         return ieee_sign + ((npy_uint32)ieee_expt << 23) + ieee_frac;
+    }
+    else if (ieee_expt >= IEEE32_MAXEXP) {
+        /* overflow */
+        return ieee_sign + IEEE32_INFINITY;
     }
     else if (ieee_expt >= -32) {
         /* possible subnormal; shift right with round-ties-to-even */
@@ -170,6 +177,13 @@ ibm32ieee64(npy_uint32 ibm)
     }
     leading_zeros = (BITCOUNT_MAGIC >> (top_digit >> 19)) & 3U;
 
+    /* Adjust exponents for the differing biases of the formats: the IBM bias
+       is 64 hex digits, or 256 bits. The IEEE bias is 1023. The difference is
+       767; we get an extra -1 from the different significand representations
+       (0.f for IBM versus 1.f for IEEE), and another -1 to compensate for an
+       evil trick that saves an operation: we don't remove the hidden 1-bit
+       from the IEEE significand, so in the final addition that extra bit ends
+       in incrementing the exponent by one. */
     ieee_expt = ibm_expt + 765 - leading_zeros;
     ieee_frac = (npy_uint64)ibm_frac << (29 + leading_zeros);
     return ieee_sign + ((npy_uint64)ieee_expt << 52) + ieee_frac;
