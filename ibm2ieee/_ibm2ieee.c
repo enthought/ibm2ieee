@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2006-2018, Enthought, Inc.
+Copyright (c) 2018, Enthought, Inc.
 All rights reserved.
 */
 
