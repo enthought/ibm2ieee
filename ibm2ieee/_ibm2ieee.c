@@ -170,7 +170,7 @@ ibm64ieee32(npy_uint64 ibm)
 
     if (ieee_expt >= 0 && ieee_expt < IEEE32_MAXEXP) {
         /* normal case; shift right 32, with round-ties-to-even */
-        npy_uint32 round_up = (ibm_frac & (npy_uint64)(0x17fffffff)) > 0;
+        npy_uint32 round_up = (ibm_frac & (npy_uint64)(0x17fffffff)) > 0U;
         ieee_frac = ((ibm_frac >> 31) + round_up) >> 1;
         return ieee_sign + ((npy_uint32)ieee_expt << 23) + ieee_frac;
     }
