@@ -14,11 +14,13 @@ All rights reserved.
 #define IBM32_EXPT ((npy_uint32)0x7f000000U)
 #define IBM32_FRAC ((npy_uint32)0x00ffffffU)
 #define IBM32_TOP  ((npy_uint32)0x00f00000U)
+#define TIES_TO_EVEN_MASK32 ((npy_uint32)0xfffffffd)
 
 #define IBM64_SIGN ((npy_uint64)0x8000000000000000U)
 #define IBM64_EXPT ((npy_uint64)0x7f00000000000000U)
 #define IBM64_FRAC ((npy_uint64)0x00ffffffffffffffU)
 #define IBM64_TOP  ((npy_uint64)0x00f0000000000000U)
+#define TIES_TO_EVEN_MASK64 ((npy_uint64)0xfffffffffffffffd)
 
 #define IEEE32_MAXEXP 254     /* Maximum biased exponent for finite values. */
 #define IEEE32_INFINITY ((npy_uint32)0x7f800000U)
@@ -79,9 +81,49 @@ ibm32ieee32(npy_uint32 ibm)
         return ieee_sign + IEEE32_INFINITY;
     }
     else if (ieee_expt >= -32) {
-        /* possible subnormal; shift right with round-ties-to-even */
-        npy_uint32 mask = ~((npy_uint32)(-3) << (-1 - ieee_expt));
-        int round_up = (ibm_frac & mask) > 0;
+        /* possible subnormal result; shift significand right by -ieee_expt
+           bits, rounding the result with round-ties-to-even.
+
+           The round-ties-to-even code deserves some explanation: out of the
+           bits we're shifting out, let's call the most significant bit the
+           "rounding bit", and the rest the "trailing bits". We'll call the
+           least significant bit that *isn't* shifted out the "parity bit".
+           So for an example 5-bit shift right, we'd label the bits as follows:
+
+           Before the shift:
+
+                   ...xxxprtttt
+                              ^
+              msb            lsb
+
+           After the shift:
+
+                        ...xxxp
+                              ^
+              msb            lsb
+
+           with the result possibly incremented by one.
+
+           For round-ties-to-even, we need to round up if both (a) the rounding
+           bit is 1, and (b) either the parity bit is 1, or at least one of the
+           trailing bits is 1. We construct a mask that has 1-bits in the
+           parity bit position and trailing bit positions, and use that to
+           check condition (b). So for example in the 5-bit shift right, the
+           mask looks like this:
+
+                   ...000101111 : mask
+                   ...xxxprtttt : ibm_frac
+                              ^
+              msb            lsb
+
+           We then shift right by (shift - 1), add 1 if (ibm & mask) is
+           nonzero, and then do a final shift by one to get the rounded
+           value. Note that this approach avoids the possibility of
+           trying to shift a width-32 value by 32, which would give
+           undefined behaviour (see C99 6.5.7p3).
+         */
+        npy_uint32 mask = ~(TIES_TO_EVEN_MASK32 << (-1 - ieee_expt));
+        int round_up = (ibm_frac & mask) > 0U;
         ieee_frac = ((ibm_frac >> (-1 - ieee_expt)) + round_up) >> 1;
         return ieee_sign + ieee_frac;
     }
@@ -138,8 +180,8 @@ ibm64ieee32(npy_uint64 ibm)
     }
     else if (ieee_expt >= -32) {
         /* possible subnormal; shift right with round-ties-to-even */
-        npy_uint64 mask = ~((npy_uint64)(-3) << (31 - ieee_expt));
-        int round_up = (ibm_frac & mask) > 0;
+        npy_uint64 mask = ~(TIES_TO_EVEN_MASK64 << (31 - ieee_expt));
+        int round_up = (ibm_frac & mask) > 0U;
         ieee_frac = ((ibm_frac >> (31 - ieee_expt)) + round_up) >> 1;
         return ieee_sign + ieee_frac;
     }
@@ -230,7 +272,9 @@ ibm64ieee64(npy_uint64 ibm)
     ibm_frac <<= leading_zeros;
     ieee_expt = ibm_expt + 765 - leading_zeros;
 
-    round_up = (ibm_frac & (npy_uint64)0xb) > 0;
+    /* Right-shift by 3 bits (the difference between the IBM and IEEE
+       significand lengths), rounding with round-ties-to-even. */
+    round_up = (ibm_frac & (npy_uint64)0xb) > 0U;
     ieee_frac = ((ibm_frac >> 2) + round_up) >> 1;
     return ieee_sign + ((npy_uint64)ieee_expt << 52) + ieee_frac;
 }
