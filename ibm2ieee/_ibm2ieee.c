@@ -1,3 +1,8 @@
+/*
+Copyright (c) 2018, Enthought, Inc.
+All rights reserved.
+*/
+
 #include "Python.h"
 #include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
