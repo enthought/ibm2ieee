@@ -123,7 +123,7 @@ ibm32ieee32(npy_uint32 ibm)
            undefined behaviour (see C99 6.5.7p3).
          */
         npy_uint32 mask = ~(TIES_TO_EVEN_MASK32 << (-1 - ieee_expt));
-        int round_up = (ibm_frac & mask) > 0U;
+        npy_uint32 round_up = (ibm_frac & mask) > 0U;
         ieee_frac = ((ibm_frac >> (-1 - ieee_expt)) + round_up) >> 1;
         return ieee_sign + ieee_frac;
     }
@@ -170,7 +170,7 @@ ibm64ieee32(npy_uint64 ibm)
 
     if (ieee_expt >= 0 && ieee_expt < IEEE32_MAXEXP) {
         /* normal case; shift right 32, with round-ties-to-even */
-        int round_up = (ibm_frac & (npy_uint64)(0x17fffffff)) > 0;
+        npy_uint32 round_up = (ibm_frac & (npy_uint64)(0x17fffffff)) > 0;
         ieee_frac = ((ibm_frac >> 31) + round_up) >> 1;
         return ieee_sign + ((npy_uint32)ieee_expt << 23) + ieee_frac;
     }
@@ -181,7 +181,7 @@ ibm64ieee32(npy_uint64 ibm)
     else if (ieee_expt >= -32) {
         /* possible subnormal; shift right with round-ties-to-even */
         npy_uint64 mask = ~(TIES_TO_EVEN_MASK64 << (31 - ieee_expt));
-        int round_up = (ibm_frac & mask) > 0U;
+        npy_uint32 round_up = (ibm_frac & mask) > 0U;
         ieee_frac = ((ibm_frac >> (31 - ieee_expt)) + round_up) >> 1;
         return ieee_sign + ieee_frac;
     }
@@ -245,9 +245,9 @@ ibm64ieee64(npy_uint64 ibm)
     /* No overflow or underflow possible, but the precision of the
        IBM double-precision format exceeds that of its IEEE counterpart,
        so we'll frequently need to round. */
-    int ibm_expt, ieee_expt, leading_zeros, round_up;
+    int ibm_expt, ieee_expt, leading_zeros;
     npy_uint64 ibm_frac, top_digit;
-    npy_uint64 ieee_sign, ieee_frac;
+    npy_uint64 ieee_sign, ieee_frac, round_up;
 
     ieee_sign = ibm & IBM64_SIGN;
     ibm_frac = ibm & IBM64_FRAC;
