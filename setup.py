@@ -1,6 +1,6 @@
 # Copyright (c) 2018, Enthought, Inc.
 # All rights reserved.
-from __future__ import absolute_import, print_function, unicode_literals
+from __future__ import absolute_import, print_function
 
 import io
 import os
@@ -36,7 +36,7 @@ ibm2ieee_extension = setuptools.Extension(
     include_dirs=[numpy.get_include()],
 )
 
-SHORT_DESCRIPTION = """\
+SHORT_DESCRIPTION = u"""\
 Convert IBM hexadecimal floating-point data to IEEE 754 floating-point data.
 """.rstrip()
 
