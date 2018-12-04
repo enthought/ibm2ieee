@@ -1,6 +1,18 @@
 Changelog for ibm2ieee
 ======================
 
+Release 1.0.1
+-------------
+
+Release date: 2018-12-04
+
+Bugfix release, fixing another distribution issue.
+
+- Add ``pyproject.toml`` file encapsulating build requirements. With this, a
+  ``pip install ibm2ieee`` should automatically download NumPy before
+  running the setup script. (PR #7)
+
+
 Release 1.0.0
 -------------
 

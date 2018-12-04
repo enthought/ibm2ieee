@@ -2,3 +2,4 @@ include README.rst
 include LICENSE
 include MANIFEST.in
 include CHANGES
+include pyproject.toml
