@@ -4,4 +4,4 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 # Version string.
-version = "0.1.1"
+version = "1.0.0"

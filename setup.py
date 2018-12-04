@@ -56,7 +56,7 @@ if __name__ == "__main__":
         packages=setuptools.find_packages(),
         ext_modules=[ibm2ieee_extension],
         classifiers=[
-            "Development Status :: 3 - Alpha",
+            "Development Status :: 5 - Production/Stable",
             "Intended Audience :: Developers",
             "License :: OSI Approved :: BSD License",
             "Operating System :: OS Independent",
