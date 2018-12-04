@@ -8,7 +8,7 @@ Release date: 2018-12-04
 
 Bugfix release, fixing another distribution issue.
 
-- Add pyproject.toml file encapsulating build requirements. With this, a
+- Add ``pyproject.toml`` file encapsulating build requirements. With this, a
   ``pip install ibm2ieee`` should automatically download NumPy before
   running the setup script. (PR #7)
 
