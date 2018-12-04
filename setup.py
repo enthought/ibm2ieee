@@ -38,7 +38,8 @@ ibm2ieee_extension = setuptools.Extension(
 
 SHORT_DESCRIPTION = """\
 Convert IBM hexadecimal floating-point data to IEEE 754 floating-point data.
-"""
+""".rstrip()
+
 
 if __name__ == "__main__":
     setuptools.setup(
@@ -49,6 +50,7 @@ if __name__ == "__main__":
         url="https://github.com/enthought/ibm2ieee",
         description=SHORT_DESCRIPTION,
         long_description=get_long_description(),
+        long_description_content_type="text/x-rst",
         keywords="ibm hfp ieee754 hexadecimal floating-point ufunc",
         install_requires=["numpy"],
         packages=setuptools.find_packages(),
