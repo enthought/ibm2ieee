@@ -1,25 +1,31 @@
 # Copyright (c) 2018, Enthought, Inc.
 # All rights reserved.
+from __future__ import absolute_import, print_function, unicode_literals
 
+import io
 import os
-from setuptools import Extension, find_packages, setup
 
 import numpy
+import setuptools
 
 
 def get_version_info():
     """ Extract version information as a dictionary from version.py. """
     version_info = {}
     version_filename = os.path.join("ibm2ieee", "version.py")
-    with open(version_filename, "r") as version_module:
+    with io.open(version_filename, "r", encoding="utf-8") as version_module:
         version_code = compile(version_module.read(), "version.py", "exec")
         exec(version_code, version_info)
     return version_info
 
 
-version = get_version_info()["version"]
+def get_long_description():
+    """ Read long description from README.txt. """
+    with io.open("README.rst", "r", encoding="utf-8") as readme:
+        return readme.read()
 
-ibm2ieee_extension = Extension(
+
+ibm2ieee_extension = setuptools.Extension(
     name="ibm2ieee._ibm2ieee",
     sources=[
         "ibm2ieee/_ibm2ieee.c",
@@ -31,17 +37,22 @@ ibm2ieee_extension = Extension(
 )
 
 SHORT_DESCRIPTION = """\
-Conversions from IBM hexadecimal floating-point to IEEE 754 floating-point.
+Convert IBM hexadecimal floating-point data to IEEE 754 floating-point data.
 """
 
 if __name__ == "__main__":
-    setup(
+    setuptools.setup(
         name="ibm2ieee",
-        version=version,
+        version=get_version_info()["version"],
         author="Enthought",
+        author_email="info@enthought.com",
+        url="https://github.com/enthought/ibm2ieee",
         description=SHORT_DESCRIPTION,
+        long_description=get_long_description(),
+        keywords="ibm hfp ieee754 hexadecimal floating-point ufunc",
         install_requires=["numpy"],
-        packages=find_packages(),
+        packages=setuptools.find_packages(),
+        ext_modules=[ibm2ieee_extension],
         classifiers=[
             "Development Status :: 3 - Alpha",
             "Intended Audience :: Developers",
@@ -54,5 +65,4 @@ if __name__ == "__main__":
             "Programming Language :: Python :: 3.6",
             "Programming Language :: Python :: 3.7",
         ],
-        ext_modules=[ibm2ieee_extension],
     )
