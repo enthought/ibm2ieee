@@ -8,8 +8,7 @@ environment:
     - PYTHON: "C:\\Python36-x64"
 
 install:
-  - pip install -r requirements.txt
-  - pip install -e .
+  - pip install -e ".[test]"
 
 build: off
 

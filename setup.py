@@ -53,6 +53,9 @@ if __name__ == "__main__":
         long_description_content_type="text/x-rst",
         keywords="ibm hfp ieee754 hexadecimal floating-point ufunc",
         install_requires=["numpy"],
+        extras_require={
+            "test": ["packaging"],
+        },
         packages=setuptools.find_packages(),
         ext_modules=[ibm2ieee_extension],
         classifiers=[
