@@ -52,7 +52,9 @@ if __name__ == "__main__":
         long_description=get_long_description(),
         long_description_content_type="text/x-rst",
         keywords="ibm hfp ieee754 hexadecimal floating-point ufunc",
-        install_requires=["numpy"],
+        # Minimum NumPy version chosen to match the current minimum
+        # for SciPy. NumPy 1.13.x doesn't build cleanly on Python 3.8.
+        install_requires=["numpy>=1.14.5"],
         extras_require={
             "test": ["packaging"],
         },
@@ -69,5 +71,6 @@ if __name__ == "__main__":
             "Programming Language :: Python :: 3.5",
             "Programming Language :: Python :: 3.6",
             "Programming Language :: Python :: 3.7",
+            "Programming Language :: Python :: 3.8",
         ],
     )
