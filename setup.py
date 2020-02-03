@@ -56,7 +56,7 @@ if __name__ == "__main__":
         # for SciPy. NumPy 1.13.x doesn't build cleanly on Python 3.8.
         install_requires=["numpy>=1.14.5"],
         extras_require={
-            "test": ["packaging"],
+            "test": ["setuptools", "six"],
         },
         packages=setuptools.find_packages(),
         ext_modules=[ibm2ieee_extension],
