@@ -1,11 +1,18 @@
 language: python
+
+os:
+  - linux
+  - osx
+
 python:
   - 2.7
   - 3.5
   - 3.6
   - 3.7
   - 3.8
+
 install:
-  - pip install -e ".[test]"
+  - python -m pip install -e .[test]
+
 script:
-  - python -m unittest discover -v ibm2ieee
+  - python -m unittest discover -v
