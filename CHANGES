@@ -9,13 +9,15 @@ Release date: 2020-02-06
 This is a bugfix release, addressing distribution and development
 issues only. There are no changes to the core functionality.
 
-- Add classifiers for Python 3.7 and 3.8, and add Python 3.7 and 3.8
-  to the test matrix for Travis and Appveyor. (PR #8)
+- Require NumPy >= 1.14.5 at runtime; build against NumPy == 1.14.5
+  at installation time. (PR #8)
 - Replace the ``packaging`` dependency of the test suite with
   ``setuptools``; add explicit dependency of the test suite on ``six``.
   (PR #11)
-- Fix Appveyor config: previously it was only ever testing with the
-  system Python. (PR #12)
+- Add classifiers for Python 3.7 and 3.8, and add Python 3.7 and 3.8
+  to the test matrix for Travis and Appveyor. (PR #8)
+- Fix buggy Appveyor configuration: previously it was only ever testing
+  with the system Python. (PR #12)
 
 
 Release 1.0.1
