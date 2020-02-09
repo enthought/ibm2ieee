@@ -1,6 +1,27 @@
 Changelog for ibm2ieee
 ======================
 
+Release 1.0.2
+-------------
+
+Release date: 2020-02-09
+
+This is a bugfix release, addressing distribution and development
+issues along with minor cleanups to the core.
+
+- Require NumPy >= 1.14.5 at runtime; build against NumPy == 1.14.5
+  at installation time. (PR #8)
+- Replace the ``packaging`` dependency of the test suite with
+  ``setuptools``; add explicit dependency of the test suite on ``six``.
+  (PR #11)
+- Add classifiers for Python 3.7 and 3.8, and add Python 3.7 and 3.8
+  to the test matrix for Travis and Appveyor. (PR #8)
+- Silence some current and future compiler and linter warnings in
+  the core C code. (PR #15)
+- Apply a micro-optimization for the 64-bit IBM to 32-bit IEEE conversion,
+  replacing a 64-bit addition with a 32-bit addition. (PR #15)
+
+
 Release 1.0.1
 -------------
 
