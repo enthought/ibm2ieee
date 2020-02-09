@@ -7,7 +7,7 @@ Release 1.0.2
 Release date: 2020-02-09
 
 This is a bugfix release, addressing distribution and development
-issues only. There are no changes to the core functionality.
+issues along with minor cleanups to the core.
 
 - Require NumPy >= 1.14.5 at runtime; build against NumPy == 1.14.5
   at installation time. (PR #8)
@@ -16,6 +16,8 @@ issues only. There are no changes to the core functionality.
   (PR #11)
 - Add classifiers for Python 3.7 and 3.8, and add Python 3.7 and 3.8
   to the test matrix for Travis and Appveyor. (PR #8)
+- Silence some current and future compiler and linter warnings in
+  the core C code. (PR #15)
 
 
 Release 1.0.1
