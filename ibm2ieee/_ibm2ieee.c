@@ -22,8 +22,8 @@ All rights reserved.
 #define IBM64_TOP  ((npy_uint64)0x00f0000000000000U)
 #define TIES_TO_EVEN_MASK64 ((npy_uint64)0xfffffffffffffffdU)
 
-/* Masks used for 3-bit and 32-bit right-shifts of a 64-bit quantity. The masks
-   comprise the parity bit and the trailing bits for the shift. */
+/* Masks used for 3-bit and 32-bit rounded right-shifts of a 64-bit quantity.
+   The masks comprise the parity bit and the trailing bits for the shift. */
 #define TIES_TO_EVEN_RSHIFT3  ((npy_uint64)0x000000000000000bU)
 #define TIES_TO_EVEN_RSHIFT32 ((npy_uint64)0x000000017fffffffU)
 
@@ -187,7 +187,8 @@ ibm64ieee32(npy_uint64 ibm)
         /* possible subnormal; shift right with round-ties-to-even */
         npy_uint64 mask = ~(TIES_TO_EVEN_MASK64 << (31 - ieee_expt));
         npy_uint32 round_up = (ibm_frac & mask) > 0U;
-        ieee_frac = ((npy_uint32)(ibm_frac >> (31 - ieee_expt)) + round_up) >> 1;
+        ieee_frac = (
+            (npy_uint32)(ibm_frac >> (31 - ieee_expt)) + round_up) >> 1;
         return ieee_sign + ieee_frac;
     }
     else {
@@ -287,8 +288,8 @@ ibm64ieee64(npy_uint64 ibm)
 /* NumPy ufunc wrapper for ibm32ieee32 */
 
 static void
-ibm32ieee32_ufunc(char **args, npy_intp const *dimensions, npy_intp const *steps,
-                  void *data)
+ibm32ieee32_ufunc(
+    char **args, npy_intp const *dimensions, npy_intp const *steps, void *data)
 {
     npy_intp i;
     npy_intp n = dimensions[0];
@@ -305,8 +306,8 @@ ibm32ieee32_ufunc(char **args, npy_intp const *dimensions, npy_intp const *steps
 /* NumPy ufunc wrapper for ibm64ieee32 */
 
 static void
-ibm64ieee32_ufunc(char **args, npy_intp const *dimensions, npy_intp const *steps,
-                  void *data)
+ibm64ieee32_ufunc(
+    char **args, npy_intp const *dimensions, npy_intp const *steps, void *data)
 {
     npy_intp i;
     npy_intp n = dimensions[0];
@@ -323,8 +324,8 @@ ibm64ieee32_ufunc(char **args, npy_intp const *dimensions, npy_intp const *steps
 /* NumPy ufunc wrapper for ibm32ieee64 */
 
 static void
-ibm32ieee64_ufunc(char **args, npy_intp const *dimensions, npy_intp const *steps,
-                  void *data)
+ibm32ieee64_ufunc(
+    char **args, npy_intp const *dimensions, npy_intp const *steps, void *data)
 {
     npy_intp i;
     npy_intp n = dimensions[0];
@@ -341,8 +342,8 @@ ibm32ieee64_ufunc(char **args, npy_intp const *dimensions, npy_intp const *steps
 /* NumPy ufunc wrapper for ibm64ieee64 */
 
 static void
-ibm64ieee64_ufunc(char **args, npy_intp const *dimensions, npy_intp const *steps,
-                  void *data)
+ibm64ieee64_ufunc(
+    char **args, npy_intp const *dimensions, npy_intp const *steps, void *data)
 {
     npy_intp i;
     npy_intp n = dimensions[0];
