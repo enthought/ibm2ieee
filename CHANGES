@@ -16,8 +16,6 @@ issues only. There are no changes to the core functionality.
   (PR #11)
 - Add classifiers for Python 3.7 and 3.8, and add Python 3.7 and 3.8
   to the test matrix for Travis and Appveyor. (PR #8)
-- Fix buggy Appveyor configuration: previously it was only ever testing
-  with the system Python. (PR #12)
 
 
 Release 1.0.1
