@@ -18,6 +18,8 @@ issues along with minor cleanups to the core.
   to the test matrix for Travis and Appveyor. (PR #8)
 - Silence some current and future compiler and linter warnings in
   the core C code. (PR #15)
+- Apply a micro-optimization for the 64-bit IBM to 32-bit IEEE conversion,
+  replacing a 64-bit addition with a 32-bit addition. (PR #15)
 
 
 Release 1.0.1
