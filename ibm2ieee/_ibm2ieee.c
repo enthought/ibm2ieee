@@ -14,13 +14,18 @@ All rights reserved.
 #define IBM32_EXPT ((npy_uint32)0x7f000000U)
 #define IBM32_FRAC ((npy_uint32)0x00ffffffU)
 #define IBM32_TOP  ((npy_uint32)0x00f00000U)
-#define TIES_TO_EVEN_MASK32 ((npy_uint32)0xfffffffd)
+#define TIES_TO_EVEN_MASK32 ((npy_uint32)0xfffffffdU)
 
 #define IBM64_SIGN ((npy_uint64)0x8000000000000000U)
 #define IBM64_EXPT ((npy_uint64)0x7f00000000000000U)
 #define IBM64_FRAC ((npy_uint64)0x00ffffffffffffffU)
 #define IBM64_TOP  ((npy_uint64)0x00f0000000000000U)
-#define TIES_TO_EVEN_MASK64 ((npy_uint64)0xfffffffffffffffd)
+#define TIES_TO_EVEN_MASK64 ((npy_uint64)0xfffffffffffffffdU)
+
+/* Masks used for 3-bit and 32-bit rounded right-shifts of a 64-bit quantity.
+   The masks comprise the parity bit and the trailing bits for the shift. */
+#define TIES_TO_EVEN_RSHIFT3  ((npy_uint64)0x000000000000000bU)
+#define TIES_TO_EVEN_RSHIFT32 ((npy_uint64)0x000000017fffffffU)
 
 #define IEEE32_MAXEXP 254     /* Maximum biased exponent for finite values. */
 #define IEEE32_INFINITY ((npy_uint32)0x7f800000U)
@@ -50,7 +55,7 @@ ibm32ieee32(npy_uint32 ibm)
     }
 
     /* Reduce shift by 2 to get a binary exponent from the hex exponent. */
-    ibm_expt = (ibm & IBM32_EXPT) >> 22;
+    ibm_expt = (int)((ibm & IBM32_EXPT) >> 22);
 
     /* Normalise significand, then count leading zeros in top hex digit. */
     top_digit = ibm_frac & IBM32_TOP;
@@ -59,7 +64,7 @@ ibm32ieee32(npy_uint32 ibm)
         ibm_expt -= 4;
         top_digit = ibm_frac & IBM32_TOP;
     }
-    leading_zeros = (BITCOUNT_MAGIC >> (top_digit >> 19)) & 3U;
+    leading_zeros = (int)((BITCOUNT_MAGIC >> (top_digit >> 19)) & 3U);
     ibm_frac <<= leading_zeros;
 
     /* Adjust exponents for the differing biases of the formats: the IBM bias
@@ -154,7 +159,7 @@ ibm64ieee32(npy_uint64 ibm)
     }
 
     /* Reduce shift by 2 to get a binary exponent from the hex exponent. */
-    ibm_expt = (ibm & IBM64_EXPT) >> 54;
+    ibm_expt = (int)((ibm & IBM64_EXPT) >> 54);
 
     /* Normalise significand, then count leading zeros in top hex digit. */
     top_digit = ibm_frac & IBM64_TOP;
@@ -163,15 +168,15 @@ ibm64ieee32(npy_uint64 ibm)
         ibm_expt -= 4;
         top_digit = ibm_frac & IBM64_TOP;
     }
-    leading_zeros = (BITCOUNT_MAGIC >> (top_digit >> 51)) & 3U;
+    leading_zeros = (int)((BITCOUNT_MAGIC >> (top_digit >> 51)) & 3U);
 
     ibm_frac <<= leading_zeros;
     ieee_expt = ibm_expt - 131 - leading_zeros;
 
     if (ieee_expt >= 0 && ieee_expt < IEEE32_MAXEXP) {
         /* normal case; shift right 32, with round-ties-to-even */
-        npy_uint32 round_up = (ibm_frac & (npy_uint64)(0x17fffffff)) > 0U;
-        ieee_frac = ((ibm_frac >> 31) + round_up) >> 1;
+        npy_uint32 round_up = (ibm_frac & TIES_TO_EVEN_RSHIFT32) > 0U;
+        ieee_frac = ((npy_uint32)(ibm_frac >> 31) + round_up) >> 1;
         return ieee_sign + ((npy_uint32)ieee_expt << 23) + ieee_frac;
     }
     else if (ieee_expt >= IEEE32_MAXEXP) {
@@ -182,7 +187,8 @@ ibm64ieee32(npy_uint64 ibm)
         /* possible subnormal; shift right with round-ties-to-even */
         npy_uint64 mask = ~(TIES_TO_EVEN_MASK64 << (31 - ieee_expt));
         npy_uint32 round_up = (ibm_frac & mask) > 0U;
-        ieee_frac = ((ibm_frac >> (31 - ieee_expt)) + round_up) >> 1;
+        ieee_frac = (
+            (npy_uint32)(ibm_frac >> (31 - ieee_expt)) + round_up) >> 1;
         return ieee_sign + ieee_frac;
     }
     else {
@@ -213,7 +219,7 @@ ibm32ieee64(npy_uint32 ibm)
     }
 
     /* Reduce shift by 2 to get a binary exponent from the hex exponent. */
-    ibm_expt = (ibm & IBM32_EXPT) >> 22;
+    ibm_expt = (int)((ibm & IBM32_EXPT) >> 22);
 
     /* Normalise significand, then count leading zeros in top hex digit. */
     top_digit = ibm_frac & IBM32_TOP;
@@ -222,7 +228,7 @@ ibm32ieee64(npy_uint32 ibm)
         ibm_expt -= 4;
         top_digit = ibm_frac & IBM32_TOP;
     }
-    leading_zeros = (BITCOUNT_MAGIC >> (top_digit >> 19)) & 3U;
+    leading_zeros = (int)((BITCOUNT_MAGIC >> (top_digit >> 19)) & 3U);
 
     /* Adjust exponents for the differing biases of the formats: the IBM bias
        is 64 hex digits, or 256 bits. The IEEE bias is 1023. The difference is
@@ -258,7 +264,7 @@ ibm64ieee64(npy_uint64 ibm)
     }
 
     /* Reduce shift by 2 to get a binary exponent from the hex exponent. */
-    ibm_expt = (ibm & IBM64_EXPT) >> 54;
+    ibm_expt = (int)((ibm & IBM64_EXPT) >> 54);
 
     /* Normalise significand, then count leading zeros in top hex digit. */
     top_digit = ibm_frac & IBM64_TOP;
@@ -267,14 +273,14 @@ ibm64ieee64(npy_uint64 ibm)
         ibm_expt -= 4;
         top_digit = ibm_frac & IBM64_TOP;
     }
-    leading_zeros = (BITCOUNT_MAGIC >> (top_digit >> 51)) & 3U;
+    leading_zeros = (int)((BITCOUNT_MAGIC >> (top_digit >> 51)) & 3U);
 
     ibm_frac <<= leading_zeros;
     ieee_expt = ibm_expt + 765 - leading_zeros;
 
     /* Right-shift by 3 bits (the difference between the IBM and IEEE
        significand lengths), rounding with round-ties-to-even. */
-    round_up = (ibm_frac & (npy_uint64)0xb) > 0U;
+    round_up = (ibm_frac & TIES_TO_EVEN_RSHIFT3) > 0U;
     ieee_frac = ((ibm_frac >> 2) + round_up) >> 1;
     return ieee_sign + ((npy_uint64)ieee_expt << 52) + ieee_frac;
 }
@@ -282,8 +288,8 @@ ibm64ieee64(npy_uint64 ibm)
 /* NumPy ufunc wrapper for ibm32ieee32 */
 
 static void
-ibm32ieee32_ufunc(char **args, npy_intp *dimensions, npy_intp *steps,
-                  void *data)
+ibm32ieee32_ufunc(
+    char **args, npy_intp const *dimensions, npy_intp const *steps, void *data)
 {
     npy_intp i;
     npy_intp n = dimensions[0];
@@ -300,8 +306,8 @@ ibm32ieee32_ufunc(char **args, npy_intp *dimensions, npy_intp *steps,
 /* NumPy ufunc wrapper for ibm64ieee32 */
 
 static void
-ibm64ieee32_ufunc(char **args, npy_intp *dimensions, npy_intp *steps,
-                  void *data)
+ibm64ieee32_ufunc(
+    char **args, npy_intp const *dimensions, npy_intp const *steps, void *data)
 {
     npy_intp i;
     npy_intp n = dimensions[0];
@@ -318,8 +324,8 @@ ibm64ieee32_ufunc(char **args, npy_intp *dimensions, npy_intp *steps,
 /* NumPy ufunc wrapper for ibm32ieee64 */
 
 static void
-ibm32ieee64_ufunc(char **args, npy_intp *dimensions, npy_intp *steps,
-                  void *data)
+ibm32ieee64_ufunc(
+    char **args, npy_intp const *dimensions, npy_intp const *steps, void *data)
 {
     npy_intp i;
     npy_intp n = dimensions[0];
@@ -336,8 +342,8 @@ ibm32ieee64_ufunc(char **args, npy_intp *dimensions, npy_intp *steps,
 /* NumPy ufunc wrapper for ibm64ieee64 */
 
 static void
-ibm64ieee64_ufunc(char **args, npy_intp *dimensions, npy_intp *steps,
-                  void *data)
+ibm64ieee64_ufunc(
+    char **args, npy_intp const *dimensions, npy_intp const *steps, void *data)
 {
     npy_intp i;
     npy_intp n = dimensions[0];
@@ -367,8 +373,10 @@ inf\n\
 ");
 
 PyUFuncGenericFunction ibm2float32_funcs[2] = {
-    &ibm32ieee32_ufunc,
-    &ibm64ieee32_ufunc,
+    /* Cast required to suppress compiler warning for NumPy < 1.19.0.
+       See https://github.com/numpy/numpy/issues/15252. */
+    (PyUFuncGenericFunction)&ibm32ieee32_ufunc,
+    (PyUFuncGenericFunction)&ibm64ieee32_ufunc,
 };
 
 static char ibm2float32_types[4] = {NPY_UINT32, NPY_FLOAT32, NPY_UINT64,
@@ -392,8 +400,10 @@ Examples\n\
 ");
 
 PyUFuncGenericFunction ibm2float64_funcs[2] = {
-    &ibm32ieee64_ufunc,
-    &ibm64ieee64_ufunc,
+    /* Cast required to suppress compiler warning for NumPy < 1.19.0.
+       See https://github.com/numpy/numpy/issues/15252. */
+    (PyUFuncGenericFunction)&ibm32ieee64_ufunc,
+    (PyUFuncGenericFunction)&ibm64ieee64_ufunc,
 };
 
 static char ibm2float64_types[4] = {NPY_UINT32, NPY_FLOAT64, NPY_UINT64,
