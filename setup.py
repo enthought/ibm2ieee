@@ -1,6 +1,5 @@
 # Copyright (c) 2018, Enthought, Inc.
 # All rights reserved.
-from __future__ import absolute_import, print_function
 
 import io
 import os
@@ -36,7 +35,7 @@ ibm2ieee_extension = setuptools.Extension(
     include_dirs=[numpy.get_include()],
 )
 
-SHORT_DESCRIPTION = u"""\
+SHORT_DESCRIPTION = """\
 Convert IBM hexadecimal floating-point data to IEEE 754 floating-point data.
 """.rstrip()
 
@@ -56,7 +55,7 @@ if __name__ == "__main__":
         # for SciPy. NumPy 1.13.x doesn't build cleanly on Python 3.8.
         install_requires=["numpy>=1.14.5"],
         extras_require={
-            "test": ["setuptools", "six"],
+            "test": ["setuptools"],
         },
         packages=setuptools.find_packages(),
         ext_modules=[ibm2ieee_extension],
