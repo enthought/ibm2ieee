@@ -137,7 +137,12 @@ to be able to install.
 License
 -------
 
-The ibm2ieee package is copyright (c) 2018, Enthought, Inc.
+(C) Copyright 2018-2021 Enthought, Inc., Austin, TX
+All rights reserved.
 
-The ibm2ieee package is licensed under a standard BSD 3-clause License. See the
-LICENSE file for details.
+This software is provided without warranty under the terms of the BSD
+license included in LICENSE.txt and may be redistributed only under
+the conditions described in the aforementioned license. The license
+is also available online at http://www.enthought.com/licenses/BSD.txt
+
+Thanks for using Enthought open source!
