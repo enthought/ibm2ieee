@@ -57,6 +57,7 @@ if __name__ == "__main__":
         extras_require={
             "test": ["setuptools"],
         },
+        python_requires=">=3.6",
         packages=setuptools.find_packages(),
         ext_modules=[ibm2ieee_extension],
         classifiers=[
@@ -65,7 +66,6 @@ if __name__ == "__main__":
             "License :: OSI Approved :: BSD License",
             "Operating System :: OS Independent",
             "Programming Language :: Python :: 3",
-            "Programming Language :: Python :: 3.5",
             "Programming Language :: Python :: 3.6",
             "Programming Language :: Python :: 3.7",
             "Programming Language :: Python :: 3.8",
