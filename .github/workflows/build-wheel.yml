@@ -11,8 +11,8 @@ jobs:
         python-version: [3.6, 3.9]
         python-architecture: [x86, x64]
         exclude:
-          os: macos-latest
-          python-architecture: x86
+          - os: macos-latest
+            python-architecture: x86
 
     runs-on: ${{ matrix.os }}
 
