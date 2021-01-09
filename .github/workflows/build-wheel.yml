@@ -26,5 +26,5 @@ jobs:
     - name: Upload wheel as artifact
       uses: actions/upload-artifact@v2
       with:
-        name: ibm2ieee-wheel-{{ runner.os }}-{{ matrix.python-version }}
+        name: ibm2ieee-wheel-${{ runner.os }}-${{ matrix.python-version }}
         path: dist/
