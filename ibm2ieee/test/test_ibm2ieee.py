@@ -1,14 +1,12 @@
 # Copyright (c) 2018, Enthought, Inc.
 # All rights reserved.
 
-from __future__ import absolute_import, print_function, unicode_literals
-
 import contextlib
 from fractions import Fraction as F
+import io
 import unittest
 
 import numpy as np
-import six
 
 from ibm2ieee import ibm2float32, ibm2float64
 
@@ -28,18 +26,6 @@ IEEE64_SIGN = 0x8000000000000000
 
 
 # Simple and inefficient Python conversions, for testing purposes.
-
-def round_ties_to_even(f):
-    """
-    Round a Fraction to the nearest integer, rounding ties to even.
-    """
-    if six.PY2:
-        q, r = divmod(f, 1)
-        round_up = 2 * r > 1 or (2 * r == 1 and q % 2 == 1)
-        return q + round_up
-    else:
-        return round(f)
-
 
 def ilog2_fraction(f):
     """
@@ -93,7 +79,7 @@ def ieee32_from_fraction(s, f):
     if not f:
         return s
     exponent = max(ilog2_fraction(f), IEEE32_MINEXP)
-    ieee_frac = round_ties_to_even(f / TWO**(exponent - IEEE32_FRAC))
+    ieee_frac = round(f / TWO**(exponent - IEEE32_FRAC))
     expt_and_frac = ((exponent - IEEE32_MINEXP) << IEEE32_FRAC) + ieee_frac
     return min(expt_and_frac, IEEE32_POSINF) + s
 
@@ -106,7 +92,7 @@ def ieee64_from_fraction(s, f):
     if not f:
         return s
     exponent = max(ilog2_fraction(f), IEEE64_MINEXP)
-    ieee_frac = round_ties_to_even(f / TWO**(exponent - IEEE64_FRAC))
+    ieee_frac = round(f / TWO**(exponent - IEEE64_FRAC))
     expt_and_frac = ((exponent - IEEE64_MINEXP) << IEEE64_FRAC) + ieee_frac
     return min(expt_and_frac, IEEE64_POSINF) + s
 
@@ -487,12 +473,12 @@ class TestIBM2IEEE(unittest.TestCase):
         self.assertIn("__version__", locals)
 
     def test_np_info(self):
-        output = six.moves.StringIO()
+        output = io.StringIO()
         with contextlib.closing(output):
             np.info(ibm2float32, output=output)
             self.assertIn("Examples", output.getvalue())
 
-        output = six.moves.StringIO()
+        output = io.StringIO()
         with contextlib.closing(output):
             np.info(ibm2float64, output=output)
             self.assertIn("Examples", output.getvalue())

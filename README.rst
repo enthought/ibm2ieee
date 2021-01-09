@@ -133,6 +133,8 @@ usual way::
 Note that it includes a C extension, so you'll need a compiler on your system
 to be able to install.
 
+ibm2ieee requires Python >= 3.6.
+
 
 License
 -------
