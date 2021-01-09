@@ -4,7 +4,7 @@ on:
   pull_request
 
 jobs:
-  build-wheel:
+  build-wheel-macos:
     strategy:
       matrix:
         python-version: [3.6, 3.9]
@@ -22,9 +22,29 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Build wheel
       run: |
-        python -m pip wheel --no-deps -w dist .
+        python -m pip wheel --no-deps -w ./dist .
     - name: Upload wheel as artifact
       uses: actions/upload-artifact@v2
       with:
         name: ibm2ieee-wheel-${{ runner.os }}-${{ matrix.python-version }}
+        path: dist/
+
+  build-wheel-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out the commit
+      uses: actions/checkout@v2
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Build manylinux Python wheels
+        uses: RalfG/python-wheels-manylinux-build@v0.3.3-manylinux2010_x86_64
+        with:
+          python-versions: 'cp36-cp36m cp39-cp39'
+    - name: Upload wheel as artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: ibm2ieee-wheel-manylinux
         path: dist/
