@@ -27,11 +27,12 @@ jobs:
     - name: Build wheel
       run: |
         python -m pip wheel --no-deps -w ./dist .
-    - name: Upload wheel as artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: ibm2ieee-wheel-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.python-architecture}}
-        path: dist/
+    - name: Publish wheels to PyPI
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        twine upload dist/*.whl
 
   build-wheel-linux:
     runs-on: ubuntu-latest
@@ -43,8 +44,35 @@ jobs:
       uses: RalfG/python-wheels-manylinux-build@v0.3.3
       with:
         python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39'
-    - name: Upload wheel as artifact
-      uses: actions/upload-artifact@v2
+    - name: Publish wheels to PyPI
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        twine upload dist/*-manylinux*.whl
+
+  build-sdist-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out the commit
+      uses: actions/checkout@v2
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v2
       with:
-        name: ibm2ieee-wheel-manylinux-allpython-x64
-        path: dist/
+        python-version: 3.9
+    - name: Install prerequisites
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Build sdist
+      run: |
+        python setup.py sdist
+    - name: Publish wheels to PyPI
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        twine upload dist/*.tar.gz
