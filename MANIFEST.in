@@ -1,5 +1,5 @@
 include README.rst
-include LICENSE
+include LICENSE.txt
 include MANIFEST.in
 include CHANGES
 include pyproject.toml
