@@ -37,7 +37,7 @@ jobs:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
-        twine upload dist/*.whl
+        python -m twine upload dist/*.whl
 
   build-wheel-sdist-linux:
     runs-on: ubuntu-latest
@@ -65,4 +65,4 @@ jobs:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
-        twine upload dist/*-manylinux*.whl dist/*.tar.gz
+        python -m twine upload dist/*-manylinux*.whl dist/*.tar.gz
