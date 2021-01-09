@@ -1,0 +1,33 @@
+name: Wheel build
+
+on:
+  pull_request
+
+jobs:
+  build-wheel:
+    strategy:
+      matrix:
+        python-version: [3.6, 3.9]
+
+    # To do: extend to other platforms once we've checked that this is
+    # producing usable wheels for macos.
+    runs-on: macos-latest
+
+    steps:
+    - name: Check out the commit
+      uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies and local packages
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+    - name: Build wheel
+      run: |
+        python setup.py bdist_wheel
+    - name: Upload wheel as artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: ibm2ieee-wheel-{{ runner.os }}-{{ matrix.python-version }}
+        path: dist/
