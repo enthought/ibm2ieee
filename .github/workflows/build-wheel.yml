@@ -40,9 +40,9 @@ jobs:
       with:
         python-version: 3.9
     - name: Build manylinux Python wheels
-        uses: RalfG/python-wheels-manylinux-build@v0.3.3-manylinux2010_x86_64
-        with:
-          python-versions: 'cp36-cp36m cp39-cp39'
+      uses: RalfG/python-wheels-manylinux-build@v0.3.3
+      with:
+        python-versions: 'cp36-cp36m cp39-cp39'
     - name: Upload wheel as artifact
       uses: actions/upload-artifact@v2
       with:
