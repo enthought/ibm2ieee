@@ -7,11 +7,10 @@ jobs:
   build-wheel-macos:
     strategy:
       matrix:
-        python-version: [3.6, 3.9]
+        os: [windows-latest, macos-latest]
+        python-version: [3.6, 3.7, 3.8, 3.9]
 
-    # To do: extend to other platforms once we've checked that this is
-    # producing usable wheels for macos.
-    runs-on: macos-latest
+    runs-on: ${{ matrix.os }}
 
     steps:
     - name: Check out the commit
@@ -42,7 +41,7 @@ jobs:
     - name: Build manylinux Python wheels
       uses: RalfG/python-wheels-manylinux-build@v0.3.3
       with:
-        python-versions: 'cp36-cp36m cp39-cp39'
+        python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39'
     - name: Upload wheel as artifact
       uses: actions/upload-artifact@v2
       with:
