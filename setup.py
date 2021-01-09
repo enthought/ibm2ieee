@@ -1,7 +1,6 @@
 # Copyright (c) 2018, Enthought, Inc.
 # All rights reserved.
 
-import io
 import os
 
 import numpy
@@ -12,7 +11,7 @@ def get_version_info():
     """ Extract version information as a dictionary from version.py. """
     version_info = {}
     version_filename = os.path.join("ibm2ieee", "version.py")
-    with io.open(version_filename, "r", encoding="utf-8") as version_module:
+    with open(version_filename, "r", encoding="utf-8") as version_module:
         version_code = compile(version_module.read(), "version.py", "exec")
         exec(version_code, version_info)
     return version_info
@@ -20,7 +19,7 @@ def get_version_info():
 
 def get_long_description():
     """ Read long description from README.txt. """
-    with io.open("README.rst", "r", encoding="utf-8") as readme:
+    with open("README.rst", "r", encoding="utf-8") as readme:
         return readme.read()
 
 
