@@ -28,8 +28,9 @@ jobs:
       run: |
         python -m pip install --upgrade pip setuptools
         python -m pip install wheel
-    - name: Install the package
-        python -m pip install ibm2ieee
+    - name: Install wheel from PyPI
+      run: |
+        python -m pip install --only-binary ibm2ieee
     - name: Run tests in a clean directory
       run: |
         mkdir testdir
