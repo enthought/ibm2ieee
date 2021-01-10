@@ -1,0 +1,73 @@
+name: Test installation from PyPI
+
+on:
+  schedule:
+    # Run at 02:37 UTC on the 11th and 25th of every month
+    - cron: '37 2 11,25 * *'
+
+jobs:
+  test-pypi-wheel:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-architecture: [x86, x64]
+        exclude:
+        - os: macos-latest
+          python-architecture: x86
+        - os: ubuntu-latest
+          python-architecture: x86
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Set up Python ${{ matrix.python-version }} (${{ matrix.python-architecture }})
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: ${{ matrix.python-architecture }}
+    - name: Install prerequisites
+      run: |
+        python -m pip install --upgrade pip setuptools
+        python -m pip install wheel
+    - name: Install wheel from PyPI
+      run: |
+        python -m pip install --only-binary :all: ibm2ieee
+    - name: Run tests in a clean directory
+      run: |
+        mkdir testdir
+        cd testdir
+        python -m unittest discover -v ibm2ieee
+
+  test-pypi-sdist:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-architecture: [x86, x64]
+        exclude:
+        - os: macos-latest
+          python-architecture: x86
+        - os: ubuntu-latest
+          python-architecture: x86
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Set up Python ${{ matrix.python-version }} (${{ matrix.python-architecture }})
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: ${{ matrix.python-architecture }}
+    - name: Install prerequisites
+      run: |
+        python -m pip install --upgrade pip setuptools
+        python -m pip install wheel
+    - name: Install from PyPI sdist
+      run: |
+        python -m pip install --no-binary ibm2ieee ibm2ieee
+    - name: Run tests in a clean directory
+      run: |
+        mkdir testdir
+        cd testdir
+        python -m unittest discover -v ibm2ieee
