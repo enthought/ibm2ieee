@@ -1,7 +1,9 @@
 name: Test installation from PyPI
 
 on:
-  pull_request
+  schedule:
+    # Run at 02:37 UTC on the 11th and 25th of every month
+    - cron: '37 2 11,25 * *'
 
 jobs:
   test-pypi-wheel:
