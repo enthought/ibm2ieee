@@ -1,6 +1,31 @@
 Changelog for ibm2ieee
 ======================
 
+Release 1.1.0
+-------------
+
+Release date: 2021-01-10
+
+This minor release updates the supported Python versions, and makes
+various distributional and developer-facing changes. Python 2.7
+and Python 3.5 are no longer supported, and Python 3.9 is now
+explicitly supported. There are no changes to the functional core.
+
+- Move to using GitHub Actions for PR tests. (#22)
+
+- Add workflow to automatically build and publish wheels for
+   releases. (#20)
+
+- Update copyright header end year; update copyright header form to match the
+  official Enthought style used elsewhere in the Enthought Tool Suite, and
+  add a flake8 check for correct and up-to-date copyright headers. (#19)
+
+- Drop support for Python 2.7 and Python 3.5. The package now requires
+  Python >= 3.6. (#18)
+
+- Add explicit support for Python 3.9. (#17)
+
+
 Release 1.0.2
 -------------
 
