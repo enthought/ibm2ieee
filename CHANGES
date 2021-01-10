@@ -6,8 +6,15 @@ Release 1.1.0
 
 Release date: 2021-01-XX
 
-This is a minor release, addressing distribution and development
-issues. There are no changes to the functional core.
+This minor release updates the supported Python versions, and makes
+various distributional and developer-facing changes. Python 2.7
+and Python 3.5 are no longer supported, and Python 3.9 is now
+explicitly supported. There are no changes to the functional core.
+
+- Move to using GitHub Actions for PR tests. (#22)
+
+- Add workflow to automatically build and publish wheels for
+   releases. (#20)
 
 - Update copyright header end year; update copyright header form to match the
   official Enthought style used elsewhere in the Enthought Tool Suite, and
