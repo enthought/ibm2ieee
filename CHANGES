@@ -4,7 +4,7 @@ Changelog for ibm2ieee
 Release 1.1.0
 -------------
 
-Release date: 2021-01-XX
+Release date: 2021-01-10
 
 This minor release updates the supported Python versions, and makes
 various distributional and developer-facing changes. Python 2.7
