@@ -130,8 +130,9 @@ usual way::
 
     pip install ibm2ieee
 
-Note that it includes a C extension, so you'll need a compiler on your system
-to be able to install.
+Wheels are provided for common platforms and Python versions. If installing
+from source, note that ibm2ieee includes a C extension, so you'll need the
+appropriate compiler on your system to be able to install.
 
 ibm2ieee requires Python >= 3.6.
 
