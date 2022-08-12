@@ -1,12 +1,12 @@
 [build-system]
-requires = [
-    # pin NumPy version used in the build, to avoid building against the latest
-    # NumPy from PyPI (and potentially introducing ABI compatibilities with the
-    # actual NumPy version in the environment)
-    "numpy>=1.14,<1.15; python_version<'3.9'",
-    "numpy>=1.16,<1.17; python_version=='3.9'",
-    # don't pin version for as-yet-unreleased versions of Python
-    "numpy>=1.16; python_version>'3.9'",
-    "setuptools",
-    "wheel",
-]
+requires = ['oldest-supported-numpy', 'setuptools', 'wheel']
+build-backend = 'setuptools.build_meta'
+
+[tool.black]
+line-length = 79
+target-version = ['py36']
+
+[tool.isort]
+profile = 'black'
+line-length = 79
+order_by_type = 'False'
