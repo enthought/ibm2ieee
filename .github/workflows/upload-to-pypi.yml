@@ -1,70 +1,80 @@
 name: Publish release to PyPI
 
 on:
+  workflow_dispatch:
   release:
     types: [published]
 
 jobs:
-  build-wheel-windows-macos:
+  build-wheels:
     strategy:
       matrix:
-        os: [windows-latest, macos-latest]
-        python-version: [3.6, 3.7, 3.8, 3.9]
-        python-architecture: [x86, x64]
-        exclude:
-          - os: macos-latest
-            python-architecture: x86
+        os: [windows-latest, macos-latest, ubuntu-latest]
 
     runs-on: ${{ matrix.os }}
 
     steps:
-    - name: Check out the commit
-      uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }} (${{ matrix.python-architecture }})
-      uses: actions/setup-python@v2
+
+    - name: Check out the release commit
+      uses: actions/checkout@v3
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v1
       with:
-        python-version: ${{ matrix.python-version }}
-        architecture: ${{ matrix.python-architecture }}
-    - name: Install prerequisites
+        platforms: arm64
+      if: runner.os == 'Linux'
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install Python packages needed for wheel build and upload
       run: |
-        python -m pip install --upgrade pip setuptools
-        python -m pip install wheel
+        python -m pip install --upgrade pip
         python -m pip install twine
-    - name: Build wheel
-      run: |
-        python -m pip wheel --no-deps -w ./dist .
-    - name: Publish wheels to PyPI
+
+    - name: Build wheels
+      uses: pypa/cibuildwheel@v2.9.0
+      env:
+        CIBW_SKIP: 'pp*'
+        CIBW_ARCHS_LINUX: "auto aarch64"
+        CIBW_ARCHS_MACOS: "auto universal2"
+
+    - name: Check and upload wheels
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
-        python -m twine upload dist/*.whl
+        python -m twine check --strict wheelhouse/*.whl
+        python -m twine upload wheelhouse/*.whl
 
-  build-wheel-sdist-linux:
+  build-sdist:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Check out the commit
-      uses: actions/checkout@v2
-    - name: Set up Python 3.9 (x64)
-      uses: actions/setup-python@v2
+
+    - name: Check out the release commit
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
       with:
-        python-version: 3.9
-    - name: Install prerequisites
+        python-version: '3.10'
+
+    - name: Install Python packages needed for sdist build and upload
       run: |
-        python -m pip install --upgrade pip setuptools
-        python -m pip install wheel
-        python -m pip install numpy twine
+        python -m pip install --upgrade pip
+        python -m pip install build twine
+
     - name: Build sdist
       run: |
-        python setup.py sdist
-    - name: Build manylinux Python wheels
-      uses: RalfG/python-wheels-manylinux-build@v0.3.3
-      with:
-        python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39'
-    - name: Publish wheels and sdist to PyPI
+        python -m build --sdist
+
+    - name: Publish sdist to PyPI
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
-        python -m twine upload dist/*-manylinux*.whl dist/*.tar.gz
+        python -m twine check --strict dist/*
+        python -m twine upload dist/*
