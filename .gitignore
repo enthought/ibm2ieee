@@ -1,3 +1,6 @@
 *.pyc
+*.pyd
 *.so
 /build/
+/dist/
+/ibm2ieee.egg-info/
