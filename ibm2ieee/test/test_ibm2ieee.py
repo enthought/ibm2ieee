@@ -9,10 +9,10 @@
 # Thanks for using Enthought open source!
 
 import contextlib
-from fractions import Fraction as F
 import io
 import itertools
 import unittest
+from fractions import Fraction as F
 
 import numpy as np
 
