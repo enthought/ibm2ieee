@@ -140,7 +140,7 @@ ibm2ieee requires Python >= 3.6.
 License
 -------
 
-(C) Copyright 2018-2021 Enthought, Inc., Austin, TX
+(C) Copyright 2018-2022 Enthought, Inc., Austin, TX
 All rights reserved.
 
 This software is provided without warranty under the terms of the BSD

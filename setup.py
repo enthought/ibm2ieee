@@ -1,4 +1,4 @@
-# (C) Copyright 2018-2021 Enthought, Inc., Austin, TX
+# (C) Copyright 2018-2022 Enthought, Inc., Austin, TX
 # All rights reserved.
 #
 # This software is provided without warranty under the terms of the BSD
@@ -7,8 +7,6 @@
 # is also available online at http://www.enthought.com/licenses/BSD.txt
 #
 # Thanks for using Enthought open source!
-
-from __future__ import absolute_import, print_function
 
 import os
 
@@ -34,12 +32,8 @@ def get_long_description():
 
 ibm2ieee_extension = setuptools.Extension(
     name="ibm2ieee._ibm2ieee",
-    sources=[
-        "ibm2ieee/_ibm2ieee.c",
-    ],
-    define_macros=[
-        ("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION"),
-    ],
+    sources=["ibm2ieee/_ibm2ieee.c"],
+    define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
     include_dirs=[numpy.get_include()],
 )
 
@@ -59,10 +53,7 @@ if __name__ == "__main__":
         long_description=get_long_description(),
         long_description_content_type="text/x-rst",
         keywords="ibm hfp ieee754 hexadecimal floating-point ufunc",
-        install_requires=[
-            "numpy>=1.14; python_version<'3.9'",
-            "numpy>=1.16; python_version>='3.9'",
-        ],
+        install_requires=["numpy"],
         extras_require={
             "test": ["setuptools"],
         },
@@ -79,5 +70,7 @@ if __name__ == "__main__":
             "Programming Language :: Python :: 3.7",
             "Programming Language :: Python :: 3.8",
             "Programming Language :: Python :: 3.9",
+            "Programming Language :: Python :: 3.10",
+            "Programming Language :: Python :: 3.11",
         ],
     )
