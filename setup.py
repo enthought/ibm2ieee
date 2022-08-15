@@ -15,7 +15,7 @@ import setuptools
 
 
 def get_version_info():
-    """ Extract version information as a dictionary from version.py. """
+    """Extract version information as a dictionary from version.py."""
     version_info = {}
     version_filename = os.path.join("ibm2ieee", "version.py")
     with open(version_filename, "r", encoding="utf-8") as version_module:
@@ -25,7 +25,7 @@ def get_version_info():
 
 
 def get_long_description():
-    """ Read long description from README.txt. """
+    """Read long description from README.txt."""
     with open("README.rst", "r", encoding="utf-8") as readme:
         return readme.read()
 

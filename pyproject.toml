@@ -8,5 +8,5 @@ target-version = ['py36']
 
 [tool.isort]
 profile = 'black'
-line-length = 79
+line_length = 79
 order_by_type = 'False'
