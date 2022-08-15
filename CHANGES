@@ -1,6 +1,28 @@
 Changelog for ibm2ieee
 ======================
 
+Release 1.2.0
+-------------
+
+Release date: 2022-08-16
+
+This minor release updates supported Python versions and various parts of the
+continuous integration and development workflow. There are no changes to the
+functional core.
+
+- Apply black and isort to the code, and enforce style in CI checks. (#33)
+- Extend wheel and sdist tests to include Python 3.10 and Python 3.11. (#32,
+  #34)
+- Update PyPI wheel-build-and-upload workflow to use cibuildwheel. (#31)
+- Update .gitignore. (#29)
+- Use subTest in repetitive tests. (#27)
+- Update build infrastructure; use ``oldest-supported-numpy`` in build
+  requirements; extend to Python 3.10 and 3.11. (#30)
+- Update copyright end year. (#28)
+- Update installation notes to mention wheels. (#24)
+- Add workflow to test PyPI wheels. (#23)
+
+
 Release 1.1.0
 -------------
 
