@@ -1,6 +1,7 @@
 name: Test installation from PyPI
 
 on:
+  workflow_dispatch:
   schedule:
     # Run at 02:37 UTC on the 11th and 25th of every month
     - cron: '37 2 11,25 * *'
