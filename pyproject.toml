@@ -19,4 +19,3 @@ archs = ["auto", "universal2"]
 
 [tool.cibuildwheel.linux]
 archs = ["auto", "aarch64"]
-skip = "*-musllinux_*"
