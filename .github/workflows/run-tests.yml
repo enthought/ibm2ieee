@@ -1,7 +1,6 @@
 name: Run tests
 
-on:
-  pull_request
+on: [pull_request, workflow_dispatch]
 
 jobs:
   test:
@@ -26,17 +25,18 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.python-architecture }}
+        cache: 'pip'
+        cache-dependency-path: '.github/workflows/test-requirements.txt'
     - name: Install prerequisites
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install black flake8 flake8-ets isort
-        python -m pip install .
+      run: python -m pip install -r .github/workflows/test-requirements.txt
+    - name: Install the package
+      run: python -m pip install .
     - name: Run style checks
       run: |
         python -m isort --check .
         python -m black --check .
         python -m flake8
-    - name: Run tests
+    - name: Run tests from a clean directory
       run: |
         mkdir testdir
         cd testdir
