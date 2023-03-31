@@ -11,7 +11,6 @@
 import numpy
 import setuptools
 
-
 setuptools.setup(
     ext_modules=[
         setuptools.Extension(
