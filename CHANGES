@@ -1,6 +1,17 @@
 Changelog for ibm2ieee
 ======================
 
+Release 1.3.1
+-------------
+
+Release date: 2023-03-31
+
+This bugfix release fixes the wheel building configuration. In the process,
+we also:
+
+- Move most of the package configuration to `pyproject.toml`
+- Drop the `ibm2ieee.version` module and the `ibm2ieee.__version__` attribute.
+
 Release 1.3.0
 -------------
 
