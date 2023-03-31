@@ -483,7 +483,6 @@ class TestIBM2IEEE(unittest.TestCase):
         exec("from ibm2ieee import *", locals, locals)
         self.assertIn("ibm2float32", locals)
         self.assertIn("ibm2float64", locals)
-        self.assertIn("__version__", locals)
 
     def test_np_info(self):
         output = io.StringIO()
