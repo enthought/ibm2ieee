@@ -134,13 +134,13 @@ Wheels are provided for common platforms and Python versions. If installing
 from source, note that ibm2ieee includes a C extension, so you'll need the
 appropriate compiler on your system to be able to install.
 
-ibm2ieee requires Python >= 3.6.
+ibm2ieee requires Python >= 3.7.
 
 
 License
 -------
 
-(C) Copyright 2018-2022 Enthought, Inc., Austin, TX
+(C) Copyright 2018-2023 Enthought, Inc., Austin, TX
 All rights reserved.
 
 This software is provided without warranty under the terms of the BSD
