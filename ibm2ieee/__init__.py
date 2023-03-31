@@ -9,10 +9,8 @@
 # Thanks for using Enthought open source!
 
 from ._ibm2ieee import ibm2float32, ibm2float64
-from .version import version as __version__
 
 __all__ = [
-    "__version__",
     "ibm2float32",
     "ibm2float64",
 ]
