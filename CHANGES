@@ -1,6 +1,14 @@
 Changelog for ibm2ieee
 ======================
 
+Release 1.3.2
+-------------
+
+Release date: 2023-10-08
+
+This bugfix release extends the wheel building configuration to support
+Python 3.12.
+
 Release 1.3.1
 -------------
 
