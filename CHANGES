@@ -1,6 +1,14 @@
 Changelog for ibm2ieee
 ======================
 
+Release 1.3.3
+-------------
+
+Release date: 2023-10-08
+
+This bugfix release fixes the wheel building configuration by removing
+support for cp312-manylinux_i686.
+
 Release 1.3.2
 -------------
 
